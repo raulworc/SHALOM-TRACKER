@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#C1121F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Shalom Pro">
+<link rel="manifest" href="manifest.json">
+<title>Shalom Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red: #C1121F;
+  --red-dark: #9B0E18;
+  --red-light: #ff4d4d22;
+  --navy: #0D1B2A;
+  --navy-mid: #1B2E3F;
+  --navy-light: #243447;
+  --gold: #E9C46A;
+  --green: #06D6A0;
+  --orange: #F4A261;
+  --blue: #457B9D;
+  --white: #F8F9FA;
+  --gray: #8899AA;
+  --border: rgba(255,255,255,0.07);
+  --card: rgba(255,255,255,0.04);
+  --shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'DM Sans',sans-serif; background:var(--navy); color:var(--white); min-height:100vh; overflow-x:hidden; }
+
+/* números con fuente monoespaciada clara */
+.num { font-family:'DM Mono',monospace; }
+
+/* ── SIDEBAR ── */
+.sidebar { position:fixed; left:0; top:0; width:220px; height:100vh; background:var(--navy-mid); border-right:1px solid var(--border); display:flex; flex-direction:column; z-index:100; transition:transform 0.3s ease; }
+.logo { padding:1.5rem 1.25rem; border-bottom:1px solid var(--border); }
+.logo-text { font-family:'Syne',sans-serif; font-size:1.4rem; font-weight:800; color:var(--white); letter-spacing:-0.5px; }
+.logo-text span { color:var(--red); }
+.logo-sub { font-size:0.7rem; color:var(--gray); margin-top:0.2rem; letter-spacing:1px; text-transform:uppercase; }
+.nav { flex:1; padding:1rem 0; overflow-y:auto; }
+.nav-item { display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1.25rem; cursor:pointer; transition:all 0.2s; border-left:3px solid transparent; color:var(--gray); font-size:0.875rem; font-weight:500; }
+.nav-item:hover { background:var(--card); color:var(--white); }
+.nav-item.active { background:var(--red-light); border-left-color:var(--red); color:var(--white); }
+.nav-icon { font-size:1.1rem; width:20px; text-align:center; }
+
+/* ── MAIN ── */
+.main { margin-left:220px; min-height:100vh; padding:2rem; }
+.topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; }
+.page-title { font-family:'Syne',sans-serif; font-size:1.75rem; font-weight:800; letter-spacing:-0.5px; }
+.page-title span { color:var(--red); }
+.topbar-right { display:flex; gap:0.75rem; align-items:center; }
+
+/* ── CARDS ── */
+.card { background:var(--navy-mid); border:1px solid var(--border); border-radius:16px; padding:1.5rem; }
+
+/* ── STAT GRID ── */
+.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.5rem; }
+.stat-card { background:var(--navy-mid); border:1px solid var(--border); border-radius:16px; padding:1.25rem; position:relative; overflow:hidden; transition:transform 0.2s; }
+.stat-card:hover { transform:translateY(-2px); }
+.stat-card::before { content:''; position:absolute; top:0; right:0; width:60px; height:60px; border-radius:0 16px 0 60px; opacity:0.15; }
+.stat-card.red::before { background:var(--red); }
+.stat-card.gold::before { background:var(--gold); }
+.stat-card.green::before { background:var(--green); }
+.stat-card.blue::before { background:var(--blue); }
+.stat-icon { font-size:1.5rem; margin-bottom:0.75rem; }
+.stat-value { font-family:'DM Mono',monospace; font-size:2rem; font-weight:500; line-height:1; margin-bottom:0.25rem; }
+.stat-label { font-size:0.75rem; color:var(--gray); font-weight:500; text-transform:uppercase; letter-spacing:0.5px; }
+.stat-card.red .stat-value { color:var(--red); }
+.stat-card.gold .stat-value { color:var(--gold); }
+.stat-card.green .stat-value { color:var(--green); }
+.stat-card.blue .stat-value { color:var(--blue); }
+
+/* ── LAYOUTS ── */
+.grid-2 { display:grid; grid-template-columns:1fr 1.4fr; gap:1.5rem; }
+.grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+
+/* ── FORM ── */
+.section-title { font-family:'Syne',sans-serif; font-size:1rem; font-weight:700; margin-bottom:1.25rem; display:flex; align-items:center; gap:0.5rem; }
+.form-group { margin-bottom:1rem; }
+label { display:block; font-size:0.7rem; font-weight:600; color:var(--gray); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:0.4rem; }
+input, select, textarea { width:100%; padding:0.75rem 1rem; background:var(--navy-light); border:1px solid var(--border); border-radius:10px; color:var(--white); font-size:0.9rem; font-family:'DM Sans',sans-serif; transition:border-color 0.2s; }
+input:focus, select:focus, textarea:focus { outline:none; border-color:var(--red); }
+select option { background:var(--navy-mid); }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
+
+/* ── BUTTONS ── */
+.btn { padding:0.75rem 1.5rem; border:none; border-radius:10px; font-size:0.875rem; font-weight:600; cursor:pointer; transition:all 0.2s; font-family:'DM Sans',sans-serif; display:inline-flex; align-items:center; gap:0.5rem; }
+.btn-primary { background:var(--red); color:white; width:100%; justify-content:center; }
+.btn-primary:hover { background:var(--red-dark); transform:translateY(-1px); }
+.btn-ghost { background:transparent; border:1px solid var(--border); color:var(--gray); }
+.btn-ghost:hover { border-color:var(--red); color:var(--white); }
+.btn-green { background:var(--green); color:var(--navy); }
+.btn-orange { background:var(--orange); color:var(--navy); }
+.btn-sm { padding:0.4rem 0.875rem; font-size:0.75rem; border-radius:8px; }
+
+/* ── SHIPMENT ITEMS ── */
+.shipment-item { background:var(--navy-light); border:1px solid var(--border); border-radius:12px; padding:1rem 1.25rem; margin-bottom:0.75rem; transition:all 0.2s; border-left:3px solid var(--blue); }
+.shipment-item:hover { border-color:rgba(255,255,255,0.15); }
+.shipment-item.in-transit { border-left-color:var(--orange); }
+.shipment-item.delivered { border-left-color:var(--green); }
+.shipment-item.clickable { cursor:pointer; }
+.shipment-item.clickable:hover { transform:translateX(3px); }
+.si-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem; }
+.si-client { font-weight:600; font-size:0.95rem; }
+.si-meta { display:flex; gap:1rem; font-size:0.75rem; color:var(--gray); margin-bottom:0.3rem; flex-wrap:wrap; }
+.si-actions { display:flex; gap:0.5rem; margin-top:0.75rem; flex-wrap:wrap; }
+
+/* ── BADGE ── */
+.badge { padding:0.25rem 0.75rem; border-radius:20px; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
+.badge-pending { background:rgba(68,123,157,0.2); color:var(--blue); border:1px solid var(--blue); }
+.badge-transit { background:rgba(244,162,97,0.2); color:var(--orange); border:1px solid var(--orange); }
+.badge-delivered { background:rgba(6,214,160,0.2); color:var(--green); border:1px solid var(--green); }
+
+/* ── TABS ── */
+.tabs { display:flex; gap:0.5rem; margin-bottom:1.5rem; background:var(--navy-light); padding:0.3rem; border-radius:12px; }
+.tab { flex:1; padding:0.625rem; text-align:center; border-radius:10px; cursor:pointer; font-size:0.8rem; font-weight:600; color:var(--gray); transition:all 0.2s; }
+.tab.active { background:var(--red); color:white; }
+
+/* ── CLIENT CARD ── */
+.client-card { background:var(--navy-light); border:1px solid var(--border); border-radius:12px; padding:1.25rem; margin-bottom:0.75rem; cursor:pointer; transition:all 0.2s; }
+.client-card:hover { border-color:var(--red); transform:translateX(3px); }
+.client-name { font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; }
+.client-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:0.5rem; margin-top:0.75rem; }
+.client-stat { text-align:center; background:var(--navy-mid); border-radius:8px; padding:0.5rem; }
+.client-stat-val { font-family:'DM Mono',monospace; font-weight:500; font-size:1.1rem; color:var(--gold); }
+.client-stat-lbl { font-size:0.65rem; color:var(--gray); text-transform:uppercase; }
+
+/* ── CITY ROW ── */
+.city-row { display:flex; align-items:center; gap:1rem; padding:0.875rem; background:var(--navy-light); border-radius:10px; margin-bottom:0.5rem; border:1px solid var(--border); }
+.city-name { font-weight:600; flex:1; }
+.city-bar-wrap { flex:2; height:6px; background:var(--navy); border-radius:3px; overflow:hidden; }
+.city-bar { height:100%; background:linear-gradient(90deg,var(--red),var(--orange)); border-radius:3px; transition:width 0.6s ease; }
+.city-stats-vals { display:flex; gap:1rem; }
+.city-val { text-align:right; }
+.city-val-num { font-family:'DM Mono',monospace; font-weight:500; color:var(--gold); }
+.city-val-lbl { font-size:0.65rem; color:var(--gray); }
+
+/* ── WHATSAPP ── */
+.wa-box { background:#075e5422; border:1px solid #25d36633; border-radius:12px; padding:1rem; font-size:0.85rem; line-height:1.6; color:#dcfce7; white-space:pre-wrap; margin-top:0.75rem; }
+
+/* ── MODAL ── */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:200; display:none; align-items:center; justify-content:center; padding:1rem; }
+.modal-overlay.show { display:flex; }
+.modal { background:var(--navy-mid); border:1px solid var(--border); border-radius:20px; padding:2rem; width:100%; max-width:540px; max-height:90vh; overflow-y:auto; animation:slideUp 0.3s ease-out; }
+@keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+.modal-title { font-family:'Syne',sans-serif; font-size:1.25rem; font-weight:800; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; }
+.modal-close { cursor:pointer; color:var(--gray); font-size:1.25rem; background:none; border:none; color:var(--gray); }
+
+/* ── TOAST ── */
+.toast { position:fixed; bottom:2rem; left:50%; transform:translateX(-50%) translateY(80px); background:var(--navy-mid); border:1px solid var(--border); color:var(--white); padding:0.875rem 1.5rem; border-radius:50px; font-size:0.875rem; font-weight:500; z-index:999; transition:transform 0.3s ease; white-space:nowrap; box-shadow:var(--shadow); }
+.toast.show { transform:translateX(-50%) translateY(0); }
+.toast.success { border-color:var(--green); color:var(--green); }
+.toast.error { border-color:var(--red); color:#ff8888; }
+
+/* ── MISC ── */
+.empty { text-align:center; padding:3rem 1rem; color:var(--gray); }
+.empty-icon { font-size:3rem; margin-bottom:0.75rem; opacity:0.4; }
+.search-wrap { position:relative; margin-bottom:1rem; }
+.search-wrap input { padding-left:2.5rem; }
+.search-icon { position:absolute; left:0.875rem; top:50%; transform:translateY(-50%); color:var(--gray); }
+.divider { height:1px; background:var(--border); margin:1.25rem 0; }
+.report-num { font-family:'DM Mono',monospace; font-size:2.5rem; font-weight:500; color:var(--gold); }
+.report-lbl { font-size:0.75rem; color:var(--gray); text-transform:uppercase; letter-spacing:0.5px; margin-top:0.25rem; }
+.page { display:none; }
+.page.active { display:block; animation:fadeIn 0.3s ease-out; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.hamburger { display:none; background:none; border:none; color:var(--white); font-size:1.5rem; cursor:pointer; }
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:var(--navy); }
+::-webkit-scrollbar-thumb { background:var(--navy-light); border-radius:3px; }
+
+/* ── MSG TEMPLATES ── */
+.msg-card { background:var(--navy-light); border:1px solid var(--border); border-radius:12px; padding:1.25rem; margin-bottom:0.75rem; }
+.msg-card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; }
+.msg-type { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:0.25rem 0.75rem; border-radius:20px; }
+.msg-type.transit { background:rgba(244,162,97,0.2); color:var(--orange); }
+.msg-type.delivered { background:rgba(6,214,160,0.2); color:var(--green); }
+textarea { resize:vertical; min-height:100px; }
+
+/* ── FAB (botón flotante móvil) ── */
+.fab {
+  display: none;
+  position: fixed;
+  bottom: 1.75rem;
+  right: 1.75rem;
+  z-index: 150;
+  background: var(--red);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 1rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(193,18,31,0.5);
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.fab:active { transform: scale(0.96); }
+
+@media (max-width:900px) {
+  .sidebar { transform:translateX(-100%); }
+  .sidebar.open { transform:translateX(0); }
+  .main { margin-left:0; padding:1rem; padding-bottom:6rem; }
+  .stats-grid { grid-template-columns:repeat(2,1fr); }
+  .grid-2 { grid-template-columns:1fr; }
+  .grid-3 { grid-template-columns:1fr; }
+  .hamburger { display:block; }
+  .form-row { grid-template-columns:1fr; }
+  .fab { display:flex !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar" id="sidebar">
+  <div class="logo">
+    <div class="logo-text">Shalom<span>Pro</span></div>
+    <div class="logo-sub">Tu negocio automatizado</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">🏠</span> Dashboard</div>
+    <div class="nav-item" onclick="showPage('envios')"><span class="nav-icon">📦</span> Envíos Activos</div>
+    <div class="nav-item" onclick="showPage('nuevo')"><span class="nav-icon">➕</span> Nuevo Envío</div>
+    <div class="nav-item" onclick="showPage('clientes')"><span class="nav-icon">👥</span> Clientes</div>
+    <div class="nav-item" onclick="showPage('ciudades')"><span class="nav-icon">🗺️</span> Por Ciudad</div>
+    <div class="nav-item" onclick="showPage('reportes')"><span class="nav-icon">📊</span> Reportes</div>
+    <div class="nav-item" onclick="showPage('historial')"><span class="nav-icon">📚</span> Historial</div>
+    <div class="nav-item" onclick="showPage('mensajes')"><span class="nav-icon">💬</span> Mensajes</div>
+  </nav>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:1rem">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <div class="page-title" id="pageTitle">Dashboard <span>📊</span></div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost btn-sm" onclick="showPage('nuevo')">+ Nuevo Envío</button>
+    </div>
+  </div>
+
+  <!-- ═══ DASHBOARD ═══ -->
+  <div class="page active" id="page-dashboard">
+    <div class="stats-grid">
+      <div class="stat-card red"><div class="stat-icon">📦</div><div class="stat-value" id="d-total">0</div><div class="stat-label">Total Envíos</div></div>
+      <div class="stat-card gold"><div class="stat-icon">🚚</div><div class="stat-value" id="d-transit">0</div><div class="stat-label">En Tránsito</div></div>
+      <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-value" id="d-delivered">0</div><div class="stat-label">Entregados</div></div>
+      <div class="stat-card blue"><div class="stat-icon">👥</div><div class="stat-value" id="d-clients">0</div><div class="stat-label">Clientes</div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="section-title" style="justify-content:space-between;flex-wrap:wrap;gap:0.5rem">
+          <span>📅 Envíos de este mes</span>
+          <span id="dash-mes-label" style="font-size:0.75rem;color:var(--gray);font-weight:400"></span>
+        </div>
+        <div id="dash-recent" style="max-height:400px;overflow-y:auto"></div>
+      </div>
+      <div class="card">
+        <div class="section-title">📈 Este Mes</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+          <div style="text-align:center;background:var(--navy-light);padding:1rem;border-radius:12px">
+            <div class="report-num" id="d-mes-envios">0</div>
+            <div class="report-lbl">Envíos del mes</div>
+          </div>
+          <div style="text-align:center;background:var(--navy-light);padding:1rem;border-radius:12px">
+            <div class="report-num" id="d-mes-costo">S/0</div>
+            <div class="report-lbl">Costo total envíos</div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="section-title" style="margin-bottom:0.75rem">⚡ Accesos rápidos</div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem">
+          <button class="btn btn-primary" onclick="showPage('nuevo')">➕ Agregar nuevo envío</button>
+          <button class="btn btn-ghost" onclick="window.open('https://shalom.com.pe/rastrea','_blank')">🔍 Ir a Shalom</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ENVÍOS ACTIVOS ═══ -->
+  <div class="page" id="page-envios">
+    <div class="tabs">
+      <div class="tab active" onclick="filterShipments('all',this)">Todos</div>
+      <div class="tab" onclick="filterShipments('in-transit',this)">En Tránsito</div>
+      <div class="tab" onclick="filterShipments('delivered',this)">Entregados</div>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" placeholder="Buscar por cliente, orden o código..." oninput="searchShipments(this.value)">
+    </div>
+    <div id="shipment-list"></div>
+  </div>
+
+  <!-- ═══ NUEVO ENVÍO ═══ -->
+  <div class="page" id="page-nuevo">
+    <div style="max-width:600px">
+      <div class="card">
+        <div class="section-title">📦 Datos del Envío</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Cliente *</label>
+            <input type="text" id="f-client" placeholder="Nombre completo" list="client-suggestions">
+            <datalist id="client-suggestions"></datalist>
+          </div>
+          <div class="form-group">
+            <label>Celular del cliente</label>
+            <input type="tel" id="f-phone" placeholder="Ej: 999888777">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>N° de Orden *</label>
+            <input type="text" id="f-order" placeholder="Ej: 9560819">
+          </div>
+          <div class="form-group">
+            <label>Código de Orden *</label>
+            <input type="text" id="f-code" placeholder="Ej: C7P9">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Producto enviado</label>
+            <input type="text" id="f-product" placeholder="Ej: Bisagras zincadas x10">
+          </div>
+          <div class="form-group">
+            <label>Ciudad destino</label>
+            <input type="text" id="f-city" placeholder="Ej: Arequipa">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Costo del envío (S/)</label>
+            <input type="number" id="f-cost" placeholder="0.00" step="0.50" min="0">
+          </div>
+          <div class="form-group">
+            <label>Valor del pedido (S/)</label>
+            <input type="number" id="f-value" placeholder="0.00" step="0.50" min="0">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="addShipment()">📦 Registrar Envío</button>
+      </div>
+      <div class="card" style="margin-top:1rem">
+        <div class="section-title">📱 Mensaje WhatsApp para el cliente</div>
+        <div class="wa-box" id="wa-preview">Completa los datos para ver el mensaje...</div>
+        <button class="btn btn-green btn-sm" style="margin-top:0.75rem;width:100%" onclick="copyWA()">📋 Copiar mensaje</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CLIENTES ═══ -->
+  <div class="page" id="page-clientes">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" placeholder="Buscar cliente..." oninput="searchClients(this.value)">
+    </div>
+    <div id="client-list"></div>
+  </div>
+
+  <!-- ═══ POR CIUDAD ═══ -->
+  <div class="page" id="page-ciudades">
+    <div class="card">
+      <div class="section-title">📊 Estadísticas por Ciudad</div>
+      <p style="font-size:0.8rem;color:var(--gray);margin-bottom:1rem">Tiempo promedio y costo promedio calculados con tus envíos reales.</p>
+      <div id="city-list"></div>
+    </div>
+  </div>
+
+  <!-- ═══ REPORTES ═══ -->
+  <div class="page" id="page-reportes">
+    <div style="margin-bottom:1rem"><select id="report-month" onchange="renderReports()" style="max-width:220px"></select></div>
+    <div class="stats-grid" style="margin-bottom:1.5rem">
+      <div class="stat-card red"><div class="stat-icon">📦</div><div class="stat-value" id="r-total">0</div><div class="stat-label">Envíos del mes</div></div>
+      <div class="stat-card gold"><div class="stat-icon">💰</div><div class="stat-value" id="r-costo">S/0</div><div class="stat-label">Costo total envíos</div></div>
+      <div class="stat-card green"><div class="stat-icon">🛍️</div><div class="stat-value" id="r-valor">S/0</div><div class="stat-label">Valor total pedidos</div></div>
+      <div class="stat-card blue"><div class="stat-icon">👥</div><div class="stat-value" id="r-clientes">0</div><div class="stat-label">Clientes únicos</div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><div class="section-title">🏆 Top Clientes del Mes</div><div id="r-top-clients"></div></div>
+      <div class="card"><div class="section-title">🗺️ Top Ciudades del Mes</div><div id="r-top-cities"></div></div>
+    </div>
+  </div>
+
+  <!-- ═══ HISTORIAL ═══ -->
+  <div class="page" id="page-historial">
+    <div class="tabs">
+      <div class="tab active" onclick="switchHistorial('general',this)">📚 General</div>
+      <div class="tab" onclick="switchHistorial('mes',this)">📅 Por Mes</div>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="history-search" placeholder="Buscar en historial..." oninput="renderHistory()">
+    </div>
+    <div id="hist-mes-selector" style="display:none;margin-bottom:1rem">
+      <select id="hist-month-sel" onchange="renderHistory()" style="max-width:220px"></select>
+    </div>
+    <div id="history-list"></div>
+  </div>
+
+  <!-- ═══ MENSAJES ═══ -->
+  <div class="page" id="page-mensajes">
+    <div style="max-width:700px">
+      <div class="card" style="margin-bottom:1rem">
+        <div class="section-title">ℹ️ ¿Cómo funcionan los mensajes?</div>
+        <p style="font-size:0.875rem;color:var(--gray);line-height:1.6">
+          Aquí defines tus mensajes predeterminados para cada situación. Usa estas variables y se reemplazarán automáticamente:<br><br>
+          <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{cliente}</code> → Nombre del cliente &nbsp;
+          <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{orden}</code> → N° de orden &nbsp;
+          <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{codigo}</code> → Código &nbsp;
+          <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{ciudad}</code> → Ciudad &nbsp;
+          <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{producto}</code> → Producto
+        </p>
+      </div>
+
+      <div class="card" style="margin-bottom:1rem">
+        <div class="section-title"><span class="msg-type transit">📦 En Tránsito</span></div>
+        <div class="form-group">
+          <label>Mensaje cuando el pedido está en camino</label>
+          <textarea id="msg-transit" rows="6"></textarea>
+        </div>
+        <button class="btn btn-sm btn-orange" onclick="saveMessages()">💾 Guardar</button>
+      </div>
+
+      <div class="card">
+        <div class="section-title"><span class="msg-type delivered">✅ Entregado</span></div>
+        <div class="form-group">
+          <label>Mensaje cuando el pedido fue entregado</label>
+          <textarea id="msg-delivered" rows="6"></textarea>
+        </div>
+        <button class="btn btn-sm btn-green" onclick="saveMessages()">💾 Guardar</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- MODAL DETALLE ENVÍO -->
+<div class="modal-overlay" id="modal-shipment">
+  <div class="modal">
+    <div class="modal-title">
+      <span>📦 Detalle del Envío</span>
+      <button class="modal-close" onclick="closeModal('modal-shipment')">✕</button>
+    </div>
+    <div id="modal-shipment-body"></div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR ENVÍO -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal">
+    <div class="modal-title">
+      <span>✏️ Editar Envío</span>
+      <button class="modal-close" onclick="closeModal('modal-edit')">✕</button>
+    </div>
+    <div id="modal-edit-body"></div>
+  </div>
+</div>
+
+<!-- MODAL CLIENTE -->
+<div class="modal-overlay" id="modal-client">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="modal-client-name">Cliente</span>
+      <button class="modal-close" onclick="closeModal('modal-client')">✕</button>
+    </div>
+    <div id="modal-client-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Loading overlay -->
+<div id="loading-overlay" style="position:fixed;inset:0;background:rgba(13,27,42,0.95);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem">
+  <div style="font-size:3rem">📦</div>
+  <div style="font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:700;color:#F8F9FA">Shalom Pro</div>
+  <div style="color:#8899AA;font-size:0.875rem">Conectando con la base de datos...</div>
+  <div style="width:200px;height:3px;background:#1B2E3F;border-radius:3px;overflow:hidden;margin-top:0.5rem">
+    <div style="height:100%;background:#C1121F;border-radius:3px;animation:loadBar 1.5s ease-in-out infinite"></div>
+  </div>
+</div>
+<style>
+@keyframes loadBar {
+  0% { width:0%;margin-left:0 }
+  50% { width:70%;margin-left:15% }
+  100% { width:0%;margin-left:100% }
+}
+</style>
+
+<!-- FAB: botón flotante solo en móvil -->
+<button class="fab" onclick="showPage('nuevo')" id="fab-btn">
+  ➕ Agregar Envío
+</button>
+
+<script type="module">
+// ═══════════════════════════════════
+//  DATA
+// ═══════════════════════════════════
+let shipments = [];
+let currentFilter = 'all';
+let currentSearch = '';
+let historialMode = 'general';
+
+const DEFAULT_MSG_TRANSIT = `Hola {cliente} 👋
+
+Te informamos que tu pedido de *{producto}* ya fue enviado a través de *Shalom Empresarial*.
+
+📦 *Datos de seguimiento:*
+• N° de Orden: *{orden}*
+• Código: *{codigo}*
+• Destino: *{ciudad}*
+
+🔍 *Rastrea tu pedido aquí:*
+https://shalom.com.pe/rastrea
+
+Ingresa el N° de Orden y el Código para ver el estado en tiempo real.
+
+¡Cualquier consulta, escríbenos! 😊`;
+
+const DEFAULT_MSG_DELIVERED = `Hola {cliente} 👋
+
+¡Tu pedido ya llegó a destino! ✅
+
+📦 Tu pedido de *{producto}* está disponible para su recojo en la agencia *Shalom* de *{ciudad}*.
+
+• N° de Orden: *{orden}*
+
+¡Gracias por tu compra! Cualquier consulta estamos aquí 😊`;
+
+// ═══════════════════════════════════
+//  FIREBASE
+// ═══════════════════════════════════
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAd2Lbs1VC5ZFeX8TNuO5UQnR5PHGjg7og",
+  authDomain: "shalom-pro.firebaseapp.com",
+  projectId: "shalom-pro",
+  storageBucket: "shalom-pro.firebasestorage.app",
+  messagingSenderId: "493053271966",
+  appId: "1:493053271966:web:8278001ba32c4a3474008f"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+const col = collection(db, 'shipments');
+
+// Escuchar cambios en tiempo real
+function startRealtimeSync() {
+  onSnapshot(col, (snapshot) => {
+    shipments = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    shipments.sort((a,b) => new Date(b.addedDate) - new Date(a.addedDate));
+    updateClientSuggestions();
+    // Refrescar la página activa
+    const activePage = document.querySelector('.page.active')?.id?.replace('page-','');
+    if (activePage === 'dashboard') renderDashboard();
+    if (activePage === 'envios')    renderShipments();
+    if (activePage === 'clientes')  renderClients();
+    if (activePage === 'ciudades')  renderCities();
+    if (activePage === 'reportes')  renderReports();
+    if (activePage === 'historial') renderHistory();
+    hideLoading();
+  });
+}
+
+function showLoading() {
+  document.getElementById('loading-overlay').style.display = 'flex';
+}
+
+function hideLoading() {
+  document.getElementById('loading-overlay').style.display = 'none';
+}
+
+async function load() {
+  showLoading();
+  startRealtimeSync();
+}
+
+async function saveShipment(s) {
+  const { id, ...data } = s;
+  if (id && typeof id === 'string' && id.length > 10) {
+    // Existing Firebase doc
+    await updateDoc(doc(db, 'shipments', id), data);
+  } else {
+    // New doc
+    await addDoc(col, data);
+  }
+}
+
+async function removeShipment(id) {
+  await deleteDoc(doc(db, 'shipments', id));
+}
+
+function loadMessages() {
+  const t = localStorage.getItem('msgTransit');
+  const d = localStorage.getItem('msgDelivered');
+  document.getElementById('msg-transit').value   = t || DEFAULT_MSG_TRANSIT;
+  document.getElementById('msg-delivered').value = d || DEFAULT_MSG_DELIVERED;
+}
+
+function saveMessages() {
+  const t = document.getElementById('msg-transit').value;
+  const d = document.getElementById('msg-delivered').value;
+  localStorage.setItem('msgTransit',   t);
+  localStorage.setItem('msgDelivered', d);
+  showToast('💾 Mensajes guardados', 'success');
+}
+
+function getMsgTransit()   { return localStorage.getItem('msgTransit')   || DEFAULT_MSG_TRANSIT; }
+function getMsgDelivered() { return localStorage.getItem('msgDelivered') || DEFAULT_MSG_DELIVERED; }
+
+// ═══════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+
+  const navMap = { dashboard:'dashboard', envios:'envíos', nuevo:'nuevo', clientes:'clientes', ciudades:'ciudad', reportes:'reportes', historial:'historial', mensajes:'mensajes' };
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.textContent.trim().toLowerCase().includes(navMap[id] || id)) n.classList.add('active');
+  });
+
+  const titles = {
+    dashboard:'Dashboard <span>📊</span>', envios:'Envíos Activos <span>📦</span>',
+    nuevo:'Nuevo Envío <span>➕</span>', clientes:'Clientes <span>👥</span>',
+    ciudades:'Por Ciudad <span>🗺️</span>', reportes:'Reportes <span>📈</span>',
+    historial:'Historial <span>📚</span>', mensajes:'Mensajes <span>💬</span>'
+  };
+  document.getElementById('pageTitle').innerHTML = titles[id] || id;
+
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'envios')    renderShipments();
+  if (id === 'clientes')  renderClients();
+  if (id === 'ciudades')  renderCities();
+  if (id === 'reportes')  renderReports();
+  if (id === 'historial') renderHistory();
+  if (id === 'nuevo')     updateWAPreview();
+  if (id === 'mensajes')  loadMessages();
+
+  if (window.innerWidth <= 900) document.getElementById('sidebar').classList.remove('open');
+}
+
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+
+// ═══════════════════════════════════
+//  ADD SHIPMENT
+// ═══════════════════════════════════
+async function addShipment() {
+  const client  = document.getElementById('f-client').value.trim();
+  const order   = document.getElementById('f-order').value.trim();
+  const code    = document.getElementById('f-code').value.trim();
+
+  if (!client || !order || !code) { showToast('⚠️ Cliente, N° Orden y Código son obligatorios', 'error'); return; }
+
+  const s = {
+    id: Date.now(),
+    client,
+    phone:   document.getElementById('f-phone').value.trim(),
+    order,
+    code,
+    product: document.getElementById('f-product').value.trim(),
+    city:    document.getElementById('f-city').value.trim(),
+    cost:    parseFloat(document.getElementById('f-cost').value) || 0,
+    value:   parseFloat(document.getElementById('f-value').value) || 0,
+    status:  'in-transit', // siempre en tránsito al agregar
+    addedDate:     new Date().toISOString(),
+    deliveredDate: null,
+    lastChecked:   null
+  };
+
+  try {
+    await addDoc(col, {
+      client:  s.client,
+      phone:   s.phone,
+      order:   s.order,
+      code:    s.code,
+      product: s.product,
+      city:    s.city,
+      cost:    s.cost,
+      value:   s.value,
+      status:  s.status,
+      addedDate:     s.addedDate,
+      deliveredDate: null,
+      lastChecked:   null
+    });
+
+    ['f-client','f-phone','f-order','f-code','f-product','f-city','f-cost','f-value']
+      .forEach(id => document.getElementById(id).value = '');
+
+    showToast('✅ Envío registrado — marcado como En Tránsito', 'success');
+    updateWAPreview();
+  } catch(e) {
+    showToast('❌ Error al guardar. Verifica conexión.', 'error');
+    console.error(e);
+  }
+}
+
+// ═══════════════════════════════════
+//  STATUS UPDATE
+// ═══════════════════════════════════
+async async function setStatus(id, status) {
+  try {
+    const updates = { status, lastChecked: new Date().toISOString() };
+    if (status === 'delivered') updates.deliveredDate = new Date().toISOString();
+    if (status === 'in-transit') updates.deliveredDate = null;
+    await updateDoc(doc(db, 'shipments', id), updates);
+    const lbl = { 'in-transit':'📦 Marcado en tránsito', delivered:'✅ Marcado como entregado' };
+    showToast(lbl[status] || 'Estado actualizado', 'success');
+    if (document.getElementById('modal-shipment').classList.contains('show')) {
+      showShipmentModal(id);
+    }
+  } catch(e) {
+    showToast('❌ Error al actualizar', 'error');
+  }
+}
+
+async async function deleteShipment(id) {
+  if (!confirm('¿Eliminar este envío?')) return;
+  try {
+    await deleteDoc(doc(db, 'shipments', id));
+    closeModal('modal-shipment');
+    showToast('🗑️ Envío eliminado', 'success');
+  } catch(e) {
+    showToast('❌ Error al eliminar', 'error');
+  }
+}
+
+// ═══════════════════════════════════
+//  EDIT SHIPMENT
+// ═══════════════════════════════════
+function showEditModal(id) {
+  const s = shipments.find(x => x.id === id);
+  if (!s) return;
+  closeModal('modal-shipment');
+
+  document.getElementById('modal-edit-body').innerHTML = `
+    <div class="form-row">
+      <div class="form-group"><label>Cliente</label><input id="e-client" value="${s.client}"></div>
+      <div class="form-group"><label>Celular</label><input id="e-phone" value="${s.phone||''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>N° de Orden</label><input id="e-order" value="${s.order}"></div>
+      <div class="form-group"><label>Código</label><input id="e-code" value="${s.code}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Producto</label><input id="e-product" value="${s.product||''}"></div>
+      <div class="form-group"><label>Ciudad</label><input id="e-city" value="${s.city||''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Costo envío (S/)</label><input type="number" id="e-cost" value="${s.cost||0}" step="0.5"></div>
+      <div class="form-group"><label>Valor pedido (S/)</label><input type="number" id="e-value" value="${s.value||0}" step="0.5"></div>
+    </div>
+    <button class="btn btn-primary" onclick="saveEdit(${id})" style="margin-top:0.5rem">💾 Guardar cambios</button>
+  `;
+  document.getElementById('modal-edit').classList.add('show');
+}
+
+async function saveEdit(id) {
+  const s = shipments.find(x => x.id === id);
+  if (!s) return;
+  s.client  = document.getElementById('e-client').value.trim();
+  s.phone   = document.getElementById('e-phone').value.trim();
+  s.order   = document.getElementById('e-order').value.trim();
+  s.code    = document.getElementById('e-code').value.trim();
+  s.product = document.getElementById('e-product').value.trim();
+  s.city    = document.getElementById('e-city').value.trim();
+  s.cost    = parseFloat(document.getElementById('e-cost').value) || 0;
+  s.value   = parseFloat(document.getElementById('e-value').value) || 0;
+  try {
+    await updateDoc(doc(db, 'shipments', id), {
+      client:  document.getElementById('e-client').value.trim(),
+      phone:   document.getElementById('e-phone').value.trim(),
+      order:   document.getElementById('e-order').value.trim(),
+      code:    document.getElementById('e-code').value.trim(),
+      product: document.getElementById('e-product').value.trim(),
+      city:    document.getElementById('e-city').value.trim(),
+      cost:    parseFloat(document.getElementById('e-cost').value) || 0,
+      value:   parseFloat(document.getElementById('e-value').value) || 0,
+    });
+    closeModal('modal-edit');
+    showToast('✏️ Envío actualizado', 'success');
+  } catch(e) {
+    showToast('❌ Error al actualizar', 'error');
+  }
+}
+
+// ═══════════════════════════════════
+//  SHIPMENT DETAIL MODAL
+// ═══════════════════════════════════
+function showShipmentModal(id) {
+  const s = shipments.find(x => x.id === id);
+  if (!s) return;
+
+  const msgTransit   = buildMsg(getMsgTransit(), s);
+  const msgDelivered = buildMsg(getMsgDelivered(), s);
+
+  document.getElementById('modal-shipment-body').innerHTML = `
+    <div class="shipment-item ${s.status}" style="margin-bottom:1rem">
+      <div class="si-header">
+        <div class="si-client" style="font-size:1.1rem">${s.client}</div>
+        <span class="badge badge-${s.status === 'in-transit' ? 'transit' : s.status}">${statusLabel(s.status)}</span>
+      </div>
+      <div class="si-meta" style="font-size:0.85rem">
+        <span>📋 <strong>${s.order}</strong></span>
+        <span>🔑 <strong>${s.code}</strong></span>
+        <button class="btn btn-sm" style="background:var(--navy);border:1px solid var(--border);color:var(--gold);padding:0.3rem 0.7rem;font-size:0.7rem" onclick="copyText('${s.order}');showToast('📋 N° Orden copiado','success')">📋 Copiar Orden</button>
+        <button class="btn btn-sm" style="background:var(--navy);border:1px solid var(--border);color:var(--gold);padding:0.3rem 0.7rem;font-size:0.7rem" onclick="copyText('${s.code}');showToast('📋 Código copiado','success')">📋 Copiar Código</button>
+        ${s.city ? `<span>📍 ${s.city}</span>` : ''}
+        ${s.phone ? `<span>📱 ${s.phone}</span>` : ''}
+      </div>
+      <div class="si-meta" style="font-size:0.85rem">
+        ${s.product ? `<span>🛍️ ${s.product}</span>` : ''}
+        ${s.cost  ? `<span>💰 Envío S/${s.cost.toFixed(2)}</span>` : ''}
+        ${s.value ? `<span>🛒 Pedido S/${s.value.toFixed(2)}</span>` : ''}
+      </div>
+      <div class="si-meta" style="font-size:0.8rem">
+        <span>📅 Agregado: ${fmtDate(s.addedDate)}</span>
+        ${s.deliveredDate ? `<span>✅ Entregado: ${fmtDate(s.deliveredDate)}</span>` : ''}
+      </div>
+    </div>
+
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem">
+      <button class="btn btn-sm" style="background:var(--blue);color:white" onclick="openShalomWith('${s.order}','${s.code}')">🔍 Ver en Shalom</button>
+      ${s.status !== 'delivered' ? `
+        <button class="btn btn-sm btn-green" onclick="setStatus(${s.id},'delivered')">✅ Marcar Entregado</button>
+      ` : `
+        <button class="btn btn-sm btn-orange" onclick="setStatus(${s.id},'in-transit')">↩️ Volver a Tránsito</button>
+      `}
+      <button class="btn btn-sm btn-ghost" onclick="showEditModal(${s.id})">✏️ Editar</button>
+      <button class="btn btn-sm" style="background:var(--red-light);color:var(--red)" onclick="deleteShipment(${s.id})">🗑️ Eliminar</button>
+    </div>
+
+    ${s.phone ? `
+      <div class="divider"></div>
+      <div class="section-title" style="margin-bottom:0.75rem">📱 Mensajes para ${s.client}</div>
+      <div style="margin-bottom:0.75rem">
+        <div style="font-size:0.75rem;color:var(--orange);font-weight:700;text-transform:uppercase;margin-bottom:0.5rem">📦 En Tránsito</div>
+        <div class="wa-box" style="font-size:0.8rem">${msgTransit}</div>
+        <button class="btn btn-sm btn-orange" style="margin-top:0.5rem;width:100%" onclick="copyText(\`${msgTransit.replace(/`/g,"'")}\`)">📋 Copiar</button>
+        <button class="btn btn-sm" style="margin-top:0.25rem;width:100%;background:#25d366;color:white" onclick="sendWA('${s.phone}',\`${msgTransit.replace(/`/g,"'")}\`)">📱 Enviar por WhatsApp</button>
+      </div>
+      <div>
+        <div style="font-size:0.75rem;color:var(--green);font-weight:700;text-transform:uppercase;margin-bottom:0.5rem">✅ Entregado</div>
+        <div class="wa-box" style="font-size:0.8rem">${msgDelivered}</div>
+        <button class="btn btn-sm btn-green" style="margin-top:0.5rem;width:100%" onclick="copyText(\`${msgDelivered.replace(/`/g,"'")}\`)">📋 Copiar</button>
+        <button class="btn btn-sm" style="margin-top:0.25rem;width:100%;background:#25d366;color:white" onclick="sendWA('${s.phone}',\`${msgDelivered.replace(/`/g,"'")}\`)">📱 Enviar por WhatsApp</button>
+      </div>
+    ` : `
+      <div style="text-align:center;padding:1rem;color:var(--gray);font-size:0.875rem">
+        Agrega el celular del cliente para ver los mensajes predeterminados
+      </div>
+    `}
+  `;
+  document.getElementById('modal-shipment').classList.add('show');
+}
+
+// ═══════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════
+function renderDashboard() {
+  const now = new Date();
+  const mes = shipments.filter(s => {
+    const d = new Date(s.addedDate);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+
+  document.getElementById('d-total').textContent     = shipments.length;
+  document.getElementById('d-transit').textContent   = shipments.filter(s => s.status === 'in-transit').length;
+  document.getElementById('d-delivered').textContent = shipments.filter(s => s.status === 'delivered').length;
+  document.getElementById('d-clients').textContent   = uniqueClients().length;
+  document.getElementById('d-mes-envios').textContent = mes.length;
+  document.getElementById('d-mes-costo').textContent  = 'S/' + mes.reduce((a,s) => a+s.cost, 0).toFixed(0);
+
+  const lbl = document.getElementById('dash-mes-label');
+  if (lbl) lbl.textContent = now.toLocaleString('es-PE', { month:'long', year:'numeric' });
+
+  const el = document.getElementById('dash-recent');
+  if (!mes.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>Sin envíos este mes</p></div>'; return; }
+
+  el.innerHTML = mes.map(s => `
+    <div class="shipment-item ${s.status} clickable" onclick="showShipmentModal(${s.id})" style="margin-bottom:0.5rem">
+      <div class="si-header">
+        <div class="si-client">${s.client}</div>
+        <span class="badge badge-${s.status === 'in-transit' ? 'transit' : s.status}">${statusLabel(s.status)}</span>
+      </div>
+      <div class="si-meta">
+        <span>📋 ${s.order}</span>
+        ${s.city ? `<span>📍 ${s.city}</span>` : ''}
+        <span>📅 ${fmtDate(s.addedDate)}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════
+//  ENVÍOS ACTIVOS
+// ═══════════════════════════════════
+function renderShipments() {
+  let list = shipments;
+  if (currentFilter !== 'all') list = list.filter(s => s.status === currentFilter);
+  if (currentSearch) {
+    const q = currentSearch.toLowerCase();
+    list = list.filter(s =>
+      s.client.toLowerCase().includes(q) ||
+      s.order.includes(q) ||
+      s.code.toLowerCase().includes(q) ||
+      (s.city && s.city.toLowerCase().includes(q))
+    );
+  }
+
+  const el = document.getElementById('shipment-list');
+  if (!list.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>No hay envíos aquí</p></div>'; return; }
+
+  el.innerHTML = list.map(s => `
+    <div class="shipment-item ${s.status}">
+      <div class="si-header">
+        <div class="si-client" style="cursor:pointer" onclick="showShipmentModal(${s.id})">${s.client} ${s.phone ? `· ${s.phone}` : ''}</div>
+        <span class="badge badge-${s.status === 'in-transit' ? 'transit' : s.status}">${statusLabel(s.status)}</span>
+      </div>
+      <div class="si-meta">
+        <span>📋 ${s.order}</span>
+        <span>🔑 ${s.code}</span>
+        ${s.city ? `<span>📍 ${s.city}</span>` : ''}
+        ${s.product ? `<span>🛍️ ${s.product}</span>` : ''}
+      </div>
+      <div class="si-meta">
+        ${s.cost  ? `<span>💰 S/${s.cost.toFixed(2)}</span>` : ''}
+        ${s.value ? `<span>🛒 S/${s.value.toFixed(2)}</span>` : ''}
+        <span>📅 ${fmtDate(s.addedDate)}</span>
+        ${s.deliveredDate ? `<span>✅ ${fmtDate(s.deliveredDate)}</span>` : ''}
+      </div>
+      <div class="si-actions">
+        <button class="btn btn-sm" style="background:var(--blue);color:white" onclick="openShalomWith('${s.order}','${s.code}')">🔍 Ver en Shalom</button>
+        ${s.status !== 'delivered' ? `
+          <button class="btn btn-sm btn-green" onclick="setStatus(${s.id},'delivered')">✅ Entregado</button>
+        ` : `
+          <button class="btn btn-sm btn-orange" onclick="setStatus(${s.id},'in-transit')">↩️ Tránsito</button>
+        `}
+        <button class="btn btn-sm btn-ghost" onclick="showEditModal(${s.id})">✏️</button>
+        ${s.phone ? `<button class="btn btn-sm" style="background:#25d366;color:white" onclick="showShipmentModal(${s.id})">📱 WA</button>` : ''}
+        <button class="btn btn-sm" style="background:var(--red-light);color:var(--red)" onclick="deleteShipment(${s.id})">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterShipments(filter, el) {
+  currentFilter = filter;
+  document.querySelectorAll('#page-envios .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderShipments();
+}
+
+function searchShipments(q) { currentSearch = q; renderShipments(); }
+
+// ═══════════════════════════════════
+//  CLIENTES
+// ═══════════════════════════════════
+function renderClients(q = '') {
+  const clients = uniqueClients();
+  const filtered = q ? clients.filter(c => c.toLowerCase().includes(q.toLowerCase())) : clients;
+  const el = document.getElementById('client-list');
+
+  if (!filtered.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">👥</div><p>No hay clientes aún</p></div>'; return; }
+
+  el.innerHTML = filtered.map(client => {
+    const cs = shipments.filter(s => s.client === client);
+    const delivered = cs.filter(s => s.status === 'delivered');
+    const avgDays = avgDeliveryDays(cs);
+    return `
+      <div class="client-card" onclick="showClientModal('${client.replace(/'/g,"\\'")}')">
+        <div class="client-header" style="display:flex;justify-content:space-between;align-items:center">
+          <div class="client-name">👤 ${client}</div>
+          <span class="badge badge-transit">${cs.length} envío${cs.length!==1?'s':''}</span>
+        </div>
+        <div class="client-stats">
+          <div class="client-stat"><div class="client-stat-val">${cs.length}</div><div class="client-stat-lbl">Total</div></div>
+          <div class="client-stat"><div class="client-stat-val">${delivered.length}</div><div class="client-stat-lbl">Entregados</div></div>
+          <div class="client-stat"><div class="client-stat-val">${avgDays > 0 ? avgDays+'d' : '-'}</div><div class="client-stat-lbl">Prom. días</div></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function searchClients(q) { renderClients(q); }
+
+function showClientModal(client) {
+  const cs = shipments.filter(s => s.client === client);
+  const delivered = cs.filter(s => s.status === 'delivered');
+  const totalCost = cs.reduce((a,s) => a+s.cost, 0);
+  const totalValue = cs.reduce((a,s) => a+s.value, 0);
+  const phone = cs.find(s => s.phone)?.phone || '';
+  const avgDays = avgDeliveryDays(cs);
+
+  document.getElementById('modal-client-name').textContent = '👤 ' + client;
+  document.getElementById('modal-client-body').innerHTML = `
+    <div class="grid-3" style="margin-bottom:1rem">
+      <div class="client-stat"><div class="client-stat-val">${cs.length}</div><div class="client-stat-lbl">Total envíos</div></div>
+      <div class="client-stat"><div class="client-stat-val">${delivered.length}</div><div class="client-stat-lbl">Entregados</div></div>
+      <div class="client-stat"><div class="client-stat-val">${avgDays > 0 ? avgDays+'d' : '-'}</div><div class="client-stat-lbl">Prom. entrega</div></div>
+    </div>
+    <div class="grid-3" style="margin-bottom:1rem">
+      <div class="client-stat"><div class="client-stat-val">S/${totalCost.toFixed(0)}</div><div class="client-stat-lbl">Costo envíos</div></div>
+      <div class="client-stat"><div class="client-stat-val">S/${totalValue.toFixed(0)}</div><div class="client-stat-lbl">Valor pedidos</div></div>
+      <div class="client-stat"><div class="client-stat-val">${phone || '-'}</div><div class="client-stat-lbl">Celular</div></div>
+    </div>
+    <div class="divider"></div>
+    <div style="font-weight:600;margin-bottom:0.75rem;font-size:0.875rem">Historial de envíos</div>
+    ${cs.map(s => `
+      <div class="shipment-item ${s.status}" style="margin-bottom:0.5rem;cursor:pointer" onclick="closeModal('modal-client');showShipmentModal(${s.id})">
+        <div class="si-header">
+          <span>📋 ${s.order} · 🔑 ${s.code}</span>
+          <span class="badge badge-${s.status === 'in-transit' ? 'transit' : s.status}">${statusLabel(s.status)}</span>
+        </div>
+        <div class="si-meta">
+          ${s.product ? `<span>🛍️ ${s.product}</span>` : ''}
+          ${s.city ? `<span>📍 ${s.city}</span>` : ''}
+          <span>📅 ${fmtDate(s.addedDate)}</span>
+        </div>
+      </div>
+    `).join('')}
+  `;
+  document.getElementById('modal-client').classList.add('show');
+}
+
+// ═══════════════════════════════════
+//  CIUDADES
+// ═══════════════════════════════════
+function renderCities() {
+  const cities = {};
+  shipments.forEach(s => {
+    if (!s.city) return;
+    if (!cities[s.city]) cities[s.city] = { total:0, costs:[], days:[] };
+    cities[s.city].total++;
+    if (s.cost) cities[s.city].costs.push(s.cost);
+    if (s.deliveredDate) {
+      const d = (new Date(s.deliveredDate) - new Date(s.addedDate)) / 86400000;
+      if (d >= 0) cities[s.city].days.push(d);
+    }
+  });
+
+  const el = document.getElementById('city-list');
+  const sorted = Object.entries(cities).sort((a,b) => b[1].total - a[1].total);
+  const maxTotal = sorted[0]?.[1].total || 1;
+
+  if (!sorted.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🗺️</div><p>Agrega envíos con ciudad para ver estadísticas</p></div>'; return; }
+
+  el.innerHTML = sorted.map(([city, data]) => {
+    const avgCost = data.costs.length ? (data.costs.reduce((a,b)=>a+b,0)/data.costs.length).toFixed(2) : '-';
+    const avgDay  = data.days.length  ? Math.round(data.days.reduce((a,b)=>a+b,0)/data.days.length) : '-';
+    const pct     = (data.total / maxTotal * 100).toFixed(0);
+    return `
+      <div class="city-row">
+        <div class="city-name">📍 ${city}</div>
+        <div class="city-bar-wrap"><div class="city-bar" style="width:${pct}%"></div></div>
+        <div class="city-stats-vals">
+          <div class="city-val"><div class="city-val-num">${data.total}</div><div class="city-val-lbl">envíos</div></div>
+          <div class="city-val"><div class="city-val-num">${avgDay!=='-' ? avgDay+'d' : '-'}</div><div class="city-val-lbl">prom. días</div></div>
+          <div class="city-val"><div class="city-val-num">${avgCost!=='-' ? 'S/'+avgCost : '-'}</div><div class="city-val-lbl">prom. costo</div></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════
+//  REPORTES
+// ═══════════════════════════════════
+function initReportMonths() {
+  const sel = document.getElementById('report-month');
+  const months = {};
+  shipments.forEach(s => {
+    const d = new Date(s.addedDate);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    months[key] = true;
+  });
+  const now = new Date();
+  months[`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`] = true;
+  sel.innerHTML = Object.keys(months).sort().reverse().map(k => {
+    const [y,m] = k.split('-');
+    return `<option value="${k}">${new Date(y,m-1).toLocaleString('es-PE',{month:'long',year:'numeric'})}</option>`;
+  }).join('');
+}
+
+function renderReports() {
+  initReportMonths();
+  const val = document.getElementById('report-month').value;
+  if (!val) return;
+  const [y,m] = val.split('-').map(Number);
+  const mes = shipments.filter(s => { const d=new Date(s.addedDate); return d.getMonth()+1===m && d.getFullYear()===y; });
+
+  document.getElementById('r-total').textContent   = mes.length;
+  document.getElementById('r-costo').textContent   = 'S/'+mes.reduce((a,s)=>a+s.cost,0).toFixed(0);
+  document.getElementById('r-valor').textContent   = 'S/'+mes.reduce((a,s)=>a+s.value,0).toFixed(0);
+  document.getElementById('r-clientes').textContent = [...new Set(mes.map(s=>s.client))].length;
+
+  const clientCount = {};
+  mes.forEach(s => { clientCount[s.client] = (clientCount[s.client]||0)+1; });
+  const topC = Object.entries(clientCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  document.getElementById('r-top-clients').innerHTML = topC.length
+    ? topC.map(([c,n],i) => `<div class="city-row"><div class="city-name">${['🥇','🥈','🥉','4️⃣','5️⃣'][i]} ${c}</div><div class="city-val"><div class="city-val-num">${n}</div><div class="city-val-lbl">envíos</div></div></div>`).join('')
+    : '<div class="empty" style="padding:1rem"><p>Sin datos</p></div>';
+
+  const cityCount = {};
+  mes.forEach(s => { if(s.city) cityCount[s.city]=(cityCount[s.city]||0)+1; });
+  const topCity = Object.entries(cityCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  document.getElementById('r-top-cities').innerHTML = topCity.length
+    ? topCity.map(([c,n],i) => `<div class="city-row"><div class="city-name">${['🥇','🥈','🥉','4️⃣','5️⃣'][i]} ${c}</div><div class="city-val"><div class="city-val-num">${n}</div><div class="city-val-lbl">envíos</div></div></div>`).join('')
+    : '<div class="empty" style="padding:1rem"><p>Agrega ciudades a tus envíos</p></div>';
+}
+
+// ═══════════════════════════════════
+//  HISTORIAL
+// ═══════════════════════════════════
+function switchHistorial(mode, el) {
+  historialMode = mode;
+  document.querySelectorAll('#page-historial .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const selWrap = document.getElementById('hist-mes-selector');
+  if (mode === 'mes') { selWrap.style.display = 'block'; initHistMonths(); }
+  else { selWrap.style.display = 'none'; }
+  document.getElementById('history-search').value = '';
+  renderHistory();
+}
+
+function initHistMonths() {
+  const sel = document.getElementById('hist-month-sel');
+  const months = {};
+  shipments.forEach(s => {
+    const d = new Date(s.addedDate);
+    months[`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`] = true;
+  });
+  sel.innerHTML = Object.keys(months).sort().reverse().map(k => {
+    const [y,m] = k.split('-');
+    return `<option value="${k}">${new Date(y,m-1).toLocaleString('es-PE',{month:'long',year:'numeric'})}</option>`;
+  }).join('');
+}
+
+function renderHistory() {
+  const q = document.getElementById('history-search')?.value || '';
+  let list = [...shipments].sort((a,b) => new Date(b.addedDate)-new Date(a.addedDate));
+
+  if (historialMode === 'mes') {
+    const val = document.getElementById('hist-month-sel')?.value;
+    if (val) {
+      const [y,m] = val.split('-').map(Number);
+      list = list.filter(s => { const d=new Date(s.addedDate); return d.getMonth()+1===m && d.getFullYear()===y; });
+    }
+  }
+
+  if (q) {
+    const ql = q.toLowerCase();
+    list = list.filter(s => s.client.toLowerCase().includes(ql) || s.order.includes(ql) || (s.city&&s.city.toLowerCase().includes(ql)) || (s.product&&s.product.toLowerCase().includes(ql)));
+  }
+
+  const el = document.getElementById('history-list');
+  if (!list.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">📚</div><p>Sin envíos en este período</p></div>'; return; }
+
+  if (historialMode === 'general') {
+    const groups = {};
+    list.forEach(s => {
+      const key = new Date(s.addedDate).toLocaleString('es-PE',{month:'long',year:'numeric'});
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(s);
+    });
+    el.innerHTML = Object.entries(groups).map(([month, items]) => {
+      const tc = items.reduce((a,s)=>a+s.cost,0);
+      const td = items.filter(s=>s.status==='delivered').length;
+      return `
+        <div style="font-family:'Syne',sans-serif;font-size:0.8rem;color:var(--gray);text-transform:uppercase;letter-spacing:1px;padding:0.75rem 0 0.25rem">
+          ${month} · ${items.length} envíos · ${td} entregados${tc>0?' · S/'+tc.toFixed(0)+' en envíos':''}
+        </div>
+        ${items.map(s => histItem(s)).join('')}`;
+    }).join('');
+  } else {
+    const tc = list.reduce((a,s)=>a+s.cost,0);
+    const td = list.filter(s=>s.status==='delivered').length;
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1rem">
+        <div class="client-stat"><div class="client-stat-val">${list.length}</div><div class="client-stat-lbl">Envíos</div></div>
+        <div class="client-stat"><div class="client-stat-val">${td}</div><div class="client-stat-lbl">Entregados</div></div>
+        <div class="client-stat"><div class="client-stat-val">S/${tc.toFixed(0)}</div><div class="client-stat-lbl">Costo envíos</div></div>
+      </div>
+      ${list.map(s => histItem(s)).join('')}`;
+  }
+}
+
+function histItem(s) {
+  return `
+    <div class="shipment-item ${s.status} clickable" onclick="showShipmentModal(${s.id})" style="margin-bottom:0.5rem">
+      <div class="si-header">
+        <div class="si-client">${s.client}</div>
+        <span class="badge badge-${s.status==='in-transit'?'transit':s.status}">${statusLabel(s.status)}</span>
+      </div>
+      <div class="si-meta">
+        <span>📋 ${s.order}</span>
+        <span>🔑 ${s.code}</span>
+        ${s.city ? `<span>📍 ${s.city}</span>` : ''}
+        ${s.product ? `<span>🛍️ ${s.product}</span>` : ''}
+        ${s.cost ? `<span>💰 S/${s.cost.toFixed(2)}</span>` : ''}
+      </div>
+      <div class="si-meta">
+        <span>📅 ${fmtDate(s.addedDate)}</span>
+        ${s.deliveredDate ? `<span>✅ ${fmtDate(s.deliveredDate)}</span>` : ''}
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════
+//  WHATSAPP & MENSAJES
+// ═══════════════════════════════════
+function buildMsg(template, s) {
+  return template
+    .replace(/{cliente}/g, s.client || '')
+    .replace(/{orden}/g,   s.order  || '')
+    .replace(/{codigo}/g,  s.code   || '')
+    .replace(/{ciudad}/g,  s.city   || '')
+    .replace(/{producto}/g,s.product|| '');
+}
+
+function updateWAPreview() {
+  const s = {
+    client:  document.getElementById('f-client')?.value  || '',
+    order:   document.getElementById('f-order')?.value   || '',
+    code:    document.getElementById('f-code')?.value    || '',
+    city:    document.getElementById('f-city')?.value    || '',
+    product: document.getElementById('f-product')?.value || ''
+  };
+  const el = document.getElementById('wa-preview');
+  if (el) el.textContent = buildMsg(getMsgTransit(), s);
+}
+
+function copyWA() {
+  const msg = document.getElementById('wa-preview').textContent;
+  navigator.clipboard.writeText(msg).then(() => showToast('📋 Mensaje copiado', 'success'));
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => showToast('📋 Mensaje copiado', 'success'));
+}
+
+function sendWA(phone, msg) {
+  window.open(`https://wa.me/51${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+['f-client','f-order','f-code','f-city','f-product'].forEach(id => {
+  setTimeout(() => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateWAPreview);
+  }, 100);
+});
+
+// ═══════════════════════════════════
+//  SHALOM
+// ═══════════════════════════════════
+function openShalomWith(order, code) {
+  // Construir URL con parámetros para prellenar
+  const url = `https://shalom.com.pe/rastrea?nroOrden=${order}&codigoOrden=${code}`;
+  navigator.clipboard.writeText(order).catch(() => {});
+  window.open(url, '_blank');
+  showToast('🔍 Abriendo Shalom con N° ' + order, 'success');
+}
+
+// ═══════════════════════════════════
+//  MODALS
+// ═══════════════════════════════════
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+// Cerrar al hacer click fuera
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('show');
+  });
+});
+
+// ═══════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════
+function uniqueClients() { return [...new Set(shipments.map(s => s.client))]; }
+
+function updateClientSuggestions() {
+  const dl = document.getElementById('client-suggestions');
+  if (dl) dl.innerHTML = uniqueClients().map(c => `<option value="${c}">`).join('');
+}
+
+function avgDeliveryDays(cs) {
+  const d = cs.filter(s => s.deliveredDate);
+  if (!d.length) return 0;
+  return Math.round(d.reduce((a,s) => a+(new Date(s.deliveredDate)-new Date(s.addedDate))/86400000, 0) / d.length);
+}
+
+function statusLabel(s) {
+  return { pending:'Pendiente', 'in-transit':'En Tránsito', delivered:'Entregado' }[s] || s;
+}
+
+function fmtDate(d) {
+  return new Date(d).toLocaleString('es-PE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ═══════════════════════════════════
+//  INIT
+// ═══════════════════════════════════
+window.addEventListener('load', () => {
+  load();
+  initReportMonths();
+});
+</script>
+</body>
+</html>
