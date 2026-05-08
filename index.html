@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#C1121F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Shalom Pro">
+<link rel="manifest" href="manifest.json">
+<title>Shalom Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red: #C1121F;
+  --red-dark: #9B0E18;
+  --red-light: #ff4d4d22;
+  --navy: #0D1B2A;
+  --navy-mid: #1B2E3F;
+  --navy-light: #243447;
+  --gold: #E9C46A;
+  --green: #06D6A0;
+  --orange: #F4A261;
+  --blue: #457B9D;
+  --white: #F8F9FA;
+  --gray: #8899AA;
+  --border: rgba(255,255,255,0.07);
+  --card: rgba(255,255,255,0.04);
+  --shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--navy);
+  color: var(--white);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  position: fixed;
+  left: 0; top: 0;
+  width: 220px;
+  height: 100vh;
+  background: var(--navy-mid);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  transition: transform 0.3s ease;
+}
+
+.logo {
+  padding: 1.5rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo-text {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--white);
+  letter-spacing: -0.5px;
+}
+
+.logo-text span { color: var(--red); }
+.logo-sub { font-size: 0.7rem; color: var(--gray); margin-top: 0.2rem; letter-spacing: 1px; text-transform: uppercase; }
+
+.nav { flex: 1; padding: 1rem 0; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-left: 3px solid transparent;
+  color: var(--gray);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.nav-item:hover { background: var(--card); color: var(--white); }
+.nav-item.active { background: var(--red-light); border-left-color: var(--red); color: var(--white); }
+.nav-icon { font-size: 1.1rem; width: 20px; text-align: center; }
+
+/* ── MAIN ── */
+.main {
+  margin-left: 220px;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.page-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.page-title span { color: var(--red); }
+
+.topbar-right { display: flex; gap: 0.75rem; align-items: center; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--navy-mid);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+.card-sm { padding: 1.25rem; }
+
+/* ── STAT GRID ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  background: var(--navy-mid);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s;
+}
+
+.stat-card:hover { transform: translateY(-2px); }
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 60px; height: 60px;
+  border-radius: 0 16px 0 60px;
+  opacity: 0.15;
+}
+
+.stat-card.red::before { background: var(--red); }
+.stat-card.gold::before { background: var(--gold); }
+.stat-card.green::before { background: var(--green); }
+.stat-card.blue::before { background: var(--blue); }
+
+.stat-icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+.stat-value { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; line-height: 1; margin-bottom: 0.25rem; }
+.stat-label { font-size: 0.75rem; color: var(--gray); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-card.red .stat-value { color: var(--red); }
+.stat-card.gold .stat-value { color: var(--gold); }
+.stat-card.green .stat-value { color: var(--green); }
+.stat-card.blue .stat-value { color: var(--blue); }
+
+/* ── GRID LAYOUTS ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1.4fr; gap: 1.5rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+
+/* ── FORM ── */
+.section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-group { margin-bottom: 1rem; }
+
+label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.4rem;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--navy-light);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--white);
+  font-size: 0.9rem;
+  font-family: 'DM Sans', sans-serif;
+  transition: border-color 0.2s;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--red);
+}
+
+select option { background: var(--navy-mid); }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+/* ── BUTTONS ── */
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-primary { background: var(--red); color: white; width: 100%; justify-content: center; }
+.btn-primary:hover { background: var(--red-dark); transform: translateY(-1px); }
+.btn-primary:active { transform: scale(0.98); }
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--gray);
+}
+
+.btn-ghost:hover { border-color: var(--red); color: var(--white); }
+
+.btn-green { background: var(--green); color: var(--navy); }
+.btn-orange { background: var(--orange); color: var(--navy); }
+.btn-sm { padding: 0.4rem 0.875rem; font-size: 0.75rem; border-radius: 8px; }
+
+/* ── SHIPMENT LIST ── */
+.shipment-item {
+  background: var(--navy-light);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+  transition: all 0.2s;
+  border-left: 3px solid var(--blue);
+}
+
+.shipment-item:hover { border-color: var(--red); transform: translateX(2px); }
+.shipment-item.in-transit { border-left-color: var(--orange); }
+.shipment-item.delivered { border-left-color: var(--green); }
+
+.si-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.si-client { font-weight: 600; font-size: 0.95rem; }
+.si-meta { display: flex; gap: 1rem; font-size: 0.75rem; color: var(--gray); margin-bottom: 0.5rem; }
+.si-meta span { display: flex; align-items: center; gap: 0.25rem; }
+.si-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap; }
+
+/* ── BADGE ── */
+.badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.badge-pending { background: rgba(68,123,157,0.2); color: var(--blue); border: 1px solid var(--blue); }
+.badge-transit { background: rgba(244,162,97,0.2); color: var(--orange); border: 1px solid var(--orange); }
+.badge-delivered { background: rgba(6,214,160,0.2); color: var(--green); border: 1px solid var(--green); }
+
+/* ── TABS ── */
+.tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; background: var(--navy-light); padding: 0.3rem; border-radius: 12px; }
+.tab { flex: 1; padding: 0.625rem; text-align: center; border-radius: 10px; cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--gray); transition: all 0.2s; }
+.tab.active { background: var(--red); color: white; }
+
+/* ── CLIENT HISTORY ── */
+.client-card {
+  background: var(--navy-light);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.client-card:hover { border-color: var(--red); }
+.client-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+.client-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; }
+.client-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+.client-stat { text-align: center; background: var(--navy-mid); border-radius: 8px; padding: 0.5rem; }
+.client-stat-val { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--gold); }
+.client-stat-lbl { font-size: 0.65rem; color: var(--gray); text-transform: uppercase; }
+
+/* ── CITY STATS ── */
+.city-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem;
+  background: var(--navy-light);
+  border-radius: 10px;
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--border);
+}
+.city-name { font-weight: 600; flex: 1; }
+.city-bar-wrap { flex: 2; height: 6px; background: var(--navy); border-radius: 3px; overflow: hidden; }
+.city-bar { height: 100%; background: linear-gradient(90deg, var(--red), var(--orange)); border-radius: 3px; transition: width 0.6s ease; }
+.city-stats-vals { display: flex; gap: 1rem; font-size: 0.8rem; }
+.city-val { text-align: right; }
+.city-val-num { font-weight: 700; color: var(--gold); font-family: 'Syne', sans-serif; }
+.city-val-lbl { font-size: 0.65rem; color: var(--gray); }
+
+/* ── WHATSAPP MSG ── */
+.wa-box {
+  background: #075e5422;
+  border: 1px solid #25d36633;
+  border-radius: 12px;
+  padding: 1rem;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #dcfce7;
+  white-space: pre-wrap;
+  margin-top: 0.75rem;
+}
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--navy-mid);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease-out;
+}
+@keyframes slideUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+.modal-title { font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 800; margin-bottom: 1.5rem; }
+.modal-close { float: right; cursor: pointer; color: var(--gray); font-size: 1.25rem; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: 2rem; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--navy-mid);
+  border: 1px solid var(--border);
+  color: var(--white);
+  padding: 0.875rem 1.5rem;
+  border-radius: 50px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  z-index: 999;
+  transition: transform 0.3s ease;
+  white-space: nowrap;
+  box-shadow: var(--shadow);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.success { border-color: var(--green); color: var(--green); }
+.toast.error { border-color: var(--red); color: #ff8888; }
+
+/* ── EMPTY ── */
+.empty { text-align: center; padding: 3rem 1rem; color: var(--gray); }
+.empty-icon { font-size: 3rem; margin-bottom: 0.75rem; opacity: 0.4; }
+
+/* ── SEARCH ── */
+.search-wrap { position: relative; margin-bottom: 1rem; }
+.search-wrap input { padding-left: 2.5rem; }
+.search-icon { position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%); color: var(--gray); font-size: 0.9rem; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--navy); }
+::-webkit-scrollbar-thumb { background: var(--navy-light); border-radius: 3px; }
+
+/* ── PAGES ── */
+.page { display: none; }
+.page.active { display: block; animation: fadeIn 0.3s ease-out; }
+@keyframes fadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── DIVIDER ── */
+.divider { height: 1px; background: var(--border); margin: 1.25rem 0; }
+
+/* ── REPORT CARDS ── */
+.report-num { font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800; color: var(--gold); }
+.report-lbl { font-size: 0.75rem; color: var(--gray); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0.25rem; }
+
+/* ── MOBILE ── */
+.hamburger { display: none; background: none; border: none; color: var(--white); font-size: 1.5rem; cursor: pointer; }
+
+@media (max-width: 900px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; padding: 1rem; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .grid-2 { grid-template-columns: 1fr; }
+  .grid-3 { grid-template-columns: 1fr; }
+  .hamburger { display: block; }
+  .form-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="logo">
+    <div class="logo-text">Shalom<span>Pro</span></div>
+    <div class="logo-sub">Tu negocio automatizado</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-item active" onclick="showPage('dashboard')">
+      <span class="nav-icon">🏠</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('envios')">
+      <span class="nav-icon">📦</span> Envíos Activos
+    </div>
+    <div class="nav-item" onclick="showPage('nuevo')">
+      <span class="nav-icon">➕</span> Nuevo Envío
+    </div>
+    <div class="nav-item" onclick="showPage('clientes')">
+      <span class="nav-icon">👥</span> Clientes
+    </div>
+    <div class="nav-item" onclick="showPage('ciudades')">
+      <span class="nav-icon">🗺️</span> Por Ciudad
+    </div>
+    <div class="nav-item" onclick="showPage('reportes')">
+      <span class="nav-icon">📊</span> Reportes
+    </div>
+    <div class="nav-item" onclick="showPage('historial')">
+      <span class="nav-icon">📚</span> Historial
+    </div>
+  </nav>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:1rem">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <div class="page-title" id="pageTitle">Dashboard <span>📊</span></div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost btn-sm" onclick="showPage('nuevo')">+ Nuevo Envío</button>
+    </div>
+  </div>
+
+  <!-- ═══ DASHBOARD ═══ -->
+  <div class="page active" id="page-dashboard">
+    <div class="stats-grid">
+      <div class="stat-card red">
+        <div class="stat-icon">📦</div>
+        <div class="stat-value" id="d-total">0</div>
+        <div class="stat-label">Total Envíos</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="stat-icon">🚚</div>
+        <div class="stat-value" id="d-transit">0</div>
+        <div class="stat-label">En Tránsito</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon">✅</div>
+        <div class="stat-value" id="d-delivered">0</div>
+        <div class="stat-label">Entregados</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-icon">👥</div>
+        <div class="stat-value" id="d-clients">0</div>
+        <div class="stat-label">Clientes</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="section-title" style="justify-content:space-between;flex-wrap:wrap;gap:0.5rem">
+          <span>📅 Envíos de este mes</span>
+          <span id="dash-mes-label" style="font-size:0.75rem;color:var(--gray);font-family:'DM Sans',sans-serif;font-weight:400"></span>
+        </div>
+        <div id="dash-recent" style="max-height:380px;overflow-y:auto;padding-right:0.25rem"></div>
+      </div>
+      <div class="card">
+        <div class="section-title">📈 Este Mes</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+          <div style="text-align:center;background:var(--navy-light);padding:1rem;border-radius:12px">
+            <div class="report-num" id="d-mes-envios">0</div>
+            <div class="report-lbl">Envíos del mes</div>
+          </div>
+          <div style="text-align:center;background:var(--navy-light);padding:1rem;border-radius:12px">
+            <div class="report-num" id="d-mes-costo">S/0</div>
+            <div class="report-lbl">Costo total envíos</div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="section-title" style="margin-bottom:0.75rem">⚡ Accesos rápidos</div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem">
+          <button class="btn btn-primary" onclick="showPage('nuevo')">➕ Agregar nuevo envío</button>
+          <button class="btn btn-ghost" onclick="openShalom()">🔍 Ir a Shalom</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ENVÍOS ACTIVOS ═══ -->
+  <div class="page" id="page-envios">
+    <div class="tabs">
+      <div class="tab active" onclick="filterShipments('all', this)">Todos</div>
+      <div class="tab" onclick="filterShipments('pending', this)">Pendientes</div>
+      <div class="tab" onclick="filterShipments('in-transit', this)">En Tránsito</div>
+      <div class="tab" onclick="filterShipments('delivered', this)">Entregados</div>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" placeholder="Buscar por cliente, orden o código..." oninput="searchShipments(this.value)">
+    </div>
+    <div id="shipment-list"></div>
+  </div>
+
+  <!-- ═══ NUEVO ENVÍO ═══ -->
+  <div class="page" id="page-nuevo">
+    <div style="max-width:600px">
+      <div class="card">
+        <div class="section-title">📦 Datos del Envío</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Cliente *</label>
+            <input type="text" id="f-client" placeholder="Nombre completo" list="client-suggestions">
+            <datalist id="client-suggestions"></datalist>
+          </div>
+          <div class="form-group">
+            <label>Celular del cliente</label>
+            <input type="tel" id="f-phone" placeholder="Ej: 999888777">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>N° de Orden *</label>
+            <input type="text" id="f-order" placeholder="Ej: 9560819">
+          </div>
+          <div class="form-group">
+            <label>Código de Orden *</label>
+            <input type="text" id="f-code" placeholder="Ej: C7P9">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Producto enviado</label>
+            <input type="text" id="f-product" placeholder="Ej: Bisagras zincadas x10">
+          </div>
+          <div class="form-group">
+            <label>Ciudad destino</label>
+            <input type="text" id="f-city" placeholder="Ej: Arequipa">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Costo del envío (S/)</label>
+            <input type="number" id="f-cost" placeholder="0.00" step="0.50" min="0">
+          </div>
+          <div class="form-group">
+            <label>Valor del pedido (S/)</label>
+            <input type="number" id="f-value" placeholder="0.00" step="0.50" min="0">
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="addShipment()" style="margin-top:0.5rem">
+          📦 Registrar Envío
+        </button>
+      </div>
+
+      <!-- WhatsApp preview -->
+      <div class="card" style="margin-top:1rem" id="wa-preview-card">
+        <div class="section-title">📱 Mensaje WhatsApp para el cliente</div>
+        <div class="wa-box" id="wa-preview">Completa los datos del envío para ver el mensaje...</div>
+        <button class="btn btn-green btn-sm" style="margin-top:0.75rem;width:100%" onclick="copyWA()">📋 Copiar mensaje</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CLIENTES ═══ -->
+  <div class="page" id="page-clientes">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" placeholder="Buscar cliente..." oninput="searchClients(this.value)">
+    </div>
+    <div id="client-list"></div>
+  </div>
+
+  <!-- ═══ POR CIUDAD ═══ -->
+  <div class="page" id="page-ciudades">
+    <div class="card" style="margin-bottom:1rem">
+      <div class="section-title">📊 Estadísticas por Ciudad</div>
+      <div style="font-size:0.8rem;color:var(--gray);margin-bottom:1rem">
+        Tiempo promedio de entrega y costo promedio calculados con tus envíos reales.
+      </div>
+      <div id="city-list"></div>
+    </div>
+  </div>
+
+  <!-- ═══ REPORTES ═══ -->
+  <div class="page" id="page-reportes">
+    <div style="margin-bottom:1rem">
+      <select id="report-month" onchange="renderReports()" style="max-width:200px">
+      </select>
+    </div>
+    <div class="stats-grid" style="margin-bottom:1.5rem">
+      <div class="stat-card red">
+        <div class="stat-icon">📦</div>
+        <div class="stat-value" id="r-total">0</div>
+        <div class="stat-label">Envíos del mes</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="stat-icon">💰</div>
+        <div class="stat-value" id="r-costo">S/0</div>
+        <div class="stat-label">Costo total envíos</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon">🛍️</div>
+        <div class="stat-value" id="r-valor">S/0</div>
+        <div class="stat-label">Valor total pedidos</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-icon">👥</div>
+        <div class="stat-value" id="r-clientes">0</div>
+        <div class="stat-label">Clientes únicos</div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="section-title">🏆 Top Clientes del Mes</div>
+        <div id="r-top-clients"></div>
+      </div>
+      <div class="card">
+        <div class="section-title">🗺️ Top Ciudades del Mes</div>
+        <div id="r-top-cities"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ HISTORIAL ═══ -->
+  <div class="page" id="page-historial">
+    <div class="tabs">
+      <div class="tab active" onclick="switchHistorial('general', this)">📚 General</div>
+      <div class="tab" onclick="switchHistorial('mes', this)">📅 Por Mes</div>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="history-search" placeholder="Buscar en historial..." oninput="searchHistory(this.value)">
+    </div>
+    <div id="hist-mes-selector" style="display:none;margin-bottom:1rem">
+      <select id="hist-month-sel" onchange="renderHistory()" style="max-width:220px">
+      </select>
+    </div>
+    <div id="history-list"></div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- MODAL CLIENTE -->
+<div class="modal-overlay" id="modal-client">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="modal-client-name">Cliente</span>
+      <span class="modal-close" onclick="closeModal()">✕</span>
+    </div>
+    <div id="modal-client-body"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════
+//  DATA
+// ════════════════════════════════
+let shipments = [];
+let currentFilter = 'all';
+let currentSearch = '';
+
+function load() {
+  const s = localStorage.getItem('shalomPro');
+  shipments = s ? JSON.parse(s) : [];
+}
+
+function save() {
+  localStorage.setItem('shalomPro', JSON.stringify(shipments));
+}
+
+// ════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.textContent.trim().toLowerCase().includes(
+      { dashboard:'dashboard', envios:'envíos', nuevo:'nuevo', clientes:'clientes', ciudades:'ciudad', reportes:'reportes', historial:'historial' }[id] || id
+    )) n.classList.add('active');
+  });
+
+  const titles = {
+    dashboard: 'Dashboard <span>📊</span>',
+    envios: 'Envíos Activos <span>📦</span>',
+    nuevo: 'Nuevo Envío <span>➕</span>',
+    clientes: 'Clientes <span>👥</span>',
+    ciudades: 'Por Ciudad <span>🗺️</span>',
+    reportes: 'Reportes <span>📈</span>',
+    historial: 'Historial <span>📚</span>'
+  };
+  document.getElementById('pageTitle').innerHTML = titles[id] || id;
+
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'envios') renderShipments();
+  if (id === 'clientes') renderClients();
+  if (id === 'ciudades') renderCities();
+  if (id === 'reportes') renderReports();
+  if (id === 'historial') renderHistory();
+  if (id === 'nuevo') updateWAPreview();
+
+  if (window.innerWidth <= 900) document.getElementById('sidebar').classList.remove('open');
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// ════════════════════════════════
+//  ADD SHIPMENT
+// ════════════════════════════════
+function addShipment() {
+  const client = document.getElementById('f-client').value.trim();
+  const order  = document.getElementById('f-order').value.trim();
+  const code   = document.getElementById('f-code').value.trim();
+
+  if (!client || !order || !code) {
+    showToast('⚠️ Cliente, N° Orden y Código son obligatorios', 'error');
+    return;
+  }
+
+  const s = {
+    id: Date.now(),
+    client,
+    phone:   document.getElementById('f-phone').value.trim(),
+    order,
+    code,
+    product: document.getElementById('f-product').value.trim(),
+    city:    document.getElementById('f-city').value.trim(),
+    cost:    parseFloat(document.getElementById('f-cost').value) || 0,
+    value:   parseFloat(document.getElementById('f-value').value) || 0,
+    status:  'pending',
+    addedDate: new Date().toISOString(),
+    deliveredDate: null,
+    lastChecked: null
+  };
+
+  shipments.unshift(s);
+  save();
+  updateClientSuggestions();
+
+  // Clear form
+  ['f-client','f-phone','f-order','f-code','f-product','f-city','f-cost','f-value']
+    .forEach(id => document.getElementById(id).value = '');
+
+  showToast('✅ Envío registrado correctamente', 'success');
+  updateWAPreview();
+}
+
+// ════════════════════════════════
+//  STATUS UPDATE
+// ════════════════════════════════
+function setStatus(id, status) {
+  const s = shipments.find(x => x.id === id);
+  if (!s) return;
+  s.status = status;
+  s.lastChecked = new Date().toISOString();
+  if (status === 'delivered' && !s.deliveredDate) {
+    s.deliveredDate = new Date().toISOString();
+  }
+  save();
+  renderShipments();
+  renderDashboard();
+  const labels = { 'in-transit': '📦 Marcado en tránsito', delivered: '✅ Marcado como entregado' };
+  showToast(labels[status] || 'Estado actualizado', 'success');
+}
+
+function deleteShipment(id) {
+  if (!confirm('¿Eliminar este envío?')) return;
+  shipments = shipments.filter(x => x.id !== id);
+  save();
+  renderShipments();
+  renderDashboard();
+  showToast('🗑️ Envío eliminado', 'success');
+}
+
+// ════════════════════════════════
+//  RENDER DASHBOARD
+// ════════════════════════════════
+function renderDashboard() {
+  const now = new Date();
+  const mes = shipments.filter(s => {
+    const d = new Date(s.addedDate);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+
+  document.getElementById('d-total').textContent     = shipments.length;
+  document.getElementById('d-transit').textContent   = shipments.filter(s => s.status === 'in-transit').length;
+  document.getElementById('d-delivered').textContent = shipments.filter(s => s.status === 'delivered').length;
+  document.getElementById('d-clients').textContent   = uniqueClients().length;
+  document.getElementById('d-mes-envios').textContent = mes.length;
+  document.getElementById('d-mes-costo').textContent  = 'S/' + mes.reduce((a,s) => a + s.cost, 0).toFixed(0);
+
+  // Show label
+  const lbl = document.getElementById('dash-mes-label');
+  const mesName = now.toLocaleString('es-PE', { month: 'long', year: 'numeric' });
+  if (lbl) lbl.textContent = mesName;
+
+  const el = document.getElementById('dash-recent');
+  if (!mes.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>Sin envíos este mes</p></div>'; return; }
+  el.innerHTML = mes.map(s => `
+    <div class="shipment-item ${s.status}" style="margin-bottom:0.5rem">
+      <div class="si-header">
+        <div class="si-client">${s.client}</div>
+        <span class="badge badge-${s.status === 'in-transit' ? 'transit' : s.status}">${statusLabel(s.status)}</span>
+      </div>
+      <div class="si-meta">
+        <span>📋 ${s.order}</span>
+        ${s.city ? `<span>📍 ${s.city}</span>` : ''}
+        <span>📅 ${fmtDate(s.addedDate)}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ════════════════════════════════
+//  RENDER SHIPMENTS
+// ════════════════════════════════
+function renderShipments() {
+  let list = shipments;
+  if (currentFilter !== 'all') list = list.filter(s => s.status === currentFilter);
+  if (currentSearch) {
+    const q = currentSearch.toLowerCase();
+    list = list.filter(s =>
+      s.client.toLowerCase().includes(q) ||
+      s.order.includes(q) ||
+      s.code.toLowerCase().includes(q) ||
+      (s.city && s.city.toLowerCase().includes(q))
+    );
+  }
+
+  const el = document.getElementById('shipment-list');
+  if (!list.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>No hay envíos aquí</p></div>';
+    return;
+  }
+
+  el.innerHTML = list.map(s => `
+    <div class="shipment-item ${s.status}">
+      <div class="si-header">
+        <div class="si-client">${s.client}${s.phone ? ` · ${s.phone}` : ''}</div>
+        <span class="badge badge-${s.status === 'in-transit' ? 'transit' : s.status}">${statusLabel(s.status)}</span>
+      </div>
+      <div class="si-meta">
+        <span>📋 ${s.order}</span>
+        <span>🔑 ${s.code}</span>
+        ${s.city ? `<span>📍 ${s.city}</span>` : ''}
+        ${s.product ? `<span>🛍️ ${s.product}</span>` : ''}
+      </div>
+      <div class="si-meta">
+        ${s.cost ? `<span>💰 Envío S/${s.cost.toFixed(2)}</span>` : ''}
+        ${s.value ? `<span>🛒 Pedido S/${s.value.toFixed(2)}</span>` : ''}
+        <span>📅 ${fmtDate(s.addedDate)}</span>
+        ${s.deliveredDate ? `<span>✅ Entregado ${fmtDate(s.deliveredDate)}</span>` : ''}
+      </div>
+      <div class="si-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openShalomWith('${s.order}','${s.code}')">🔍 Ver en Shalom</button>
+        ${s.status !== 'in-transit' && s.status !== 'delivered' ? `
+          <button class="btn btn-sm" style="background:var(--orange);color:var(--navy)" onclick="setStatus(${s.id},'in-transit')">📦 En tránsito</button>
+        ` : ''}
+        ${s.status !== 'delivered' ? `
+          <button class="btn btn-sm btn-green" onclick="setStatus(${s.id},'delivered')">✅ Entregado</button>
+        ` : ''}
+        ${s.phone ? `
+          <button class="btn btn-sm" style="background:#25d366;color:white" onclick="sendWA('${s.phone}','${s.client}','${s.order}','${s.code}','${s.city||''}')">📱 WA</button>
+        ` : ''}
+        <button class="btn btn-sm" style="background:var(--red-light);color:var(--red)" onclick="deleteShipment(${s.id})">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterShipments(filter, el) {
+  currentFilter = filter;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderShipments();
+}
+
+function searchShipments(q) {
+  currentSearch = q;
+  renderShipments();
+}
+
+// ════════════════════════════════
+//  RENDER CLIENTS
+// ════════════════════════════════
+function renderClients(q = '') {
+  const clients = uniqueClients();
+  const filtered = q ? clients.filter(c => c.toLowerCase().includes(q.toLowerCase())) : clients;
+  const el = document.getElementById('client-list');
+
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">👥</div><p>No hay clientes aún</p></div>';
+    return;
+  }
+
+  el.innerHTML = filtered.map(client => {
+    const cs = shipments.filter(s => s.client === client);
+    const delivered = cs.filter(s => s.status === 'delivered');
+    const totalCost = cs.reduce((a, s) => a + s.cost, 0);
+    const totalValue = cs.reduce((a, s) => a + s.value, 0);
+    const avgDays = avgDeliveryDays(cs);
+
+    return `
+      <div class="client-card" onclick="showClientModal('${client.replace(/'/g,"\\'")}')">
+        <div class="client-header">
+          <div class="client-name">👤 ${client}</div>
+          <span class="badge badge-${cs[0]?.status === 'in-transit' ? 'transit' : cs[0]?.status || 'pending'}">${cs.length} envío${cs.length !== 1 ? 's' : ''}</span>
+        </div>
+        <div class="client-stats">
+          <div class="client-stat">
+            <div class="client-stat-val">${cs.length}</div>
+            <div class="client-stat-lbl">Total</div>
+          </div>
+          <div class="client-stat">
+            <div class="client-stat-val">${delivered.length}</div>
+            <div class="client-stat-lbl">Entregados</div>
+          </div>
+          <div class="client-stat">
+            <div class="client-stat-val">${avgDays > 0 ? avgDays + 'd' : '-'}</div>
+            <div class="client-stat-lbl">Prom. días</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function searchClients(q) { renderClients(q); }
+
+function showClientModal(client) {
+  const cs = shipments.filter(s => s.client === client);
+  const delivered = cs.filter(s => s.status === 'delivered');
+  const totalCost = cs.reduce((a, s) => a + s.cost, 0);
+  const totalValue = cs.reduce((a, s) => a + s.value, 0);
+  const phone = cs.find(s => s.phone)?.phone || '';
+  const avgDays = avgDeliveryDays(cs);
+
+  document.getElementById('modal-client-name').textContent = '👤 ' + client;
+  document.getElementById('modal-client-body').innerHTML = `
+    <div class="grid-3" style="margin-bottom:1rem">
+      <div class="client-stat"><div class="client-stat-val">${cs.length}</div><div class="client-stat-lbl">Total envíos</div></div>
+      <div class="client-stat"><div class="client-stat-val">${delivered.length}</div><div class="client-stat-lbl">Entregados</div></div>
+      <div class="client-stat"><div class="client-stat-val">${avgDays > 0 ? avgDays + 'd' : '-'}</div><div class="client-stat-lbl">Prom. entrega</div></div>
+    </div>
+    <div class="grid-3" style="margin-bottom:1rem">
+      <div class="client-stat"><div class="client-stat-val">S/${totalCost.toFixed(0)}</div><div class="client-stat-lbl">Costo envíos</div></div>
+      <div class="client-stat"><div class="client-stat-val">S/${totalValue.toFixed(0)}</div><div class="client-stat-lbl">Valor pedidos</div></div>
+      <div class="client-stat"><div class="client-stat-val">${phone || '-'}</div><div class="client-stat-lbl">Celular</div></div>
+    </div>
+    <div class="divider"></div>
+    <div style="font-weight:600;margin-bottom:0.75rem;font-size:0.875rem">Historial de envíos</div>
+    ${cs.map(s => `
+      <div class="shipment-item ${s.status}" style="margin-bottom:0.5rem">
+        <div class="si-header">
+          <span style="font-size:0.875rem">📋 ${s.order} · 🔑 ${s.code}</span>
+          <span class="badge badge-${s.status === 'in-transit' ? 'transit' : s.status}">${statusLabel(s.status)}</span>
+        </div>
+        <div class="si-meta">
+          ${s.product ? `<span>🛍️ ${s.product}</span>` : ''}
+          ${s.city ? `<span>📍 ${s.city}</span>` : ''}
+          <span>📅 ${fmtDate(s.addedDate)}</span>
+          ${s.cost ? `<span>💰 S/${s.cost.toFixed(2)}</span>` : ''}
+        </div>
+      </div>
+    `).join('')}
+  `;
+  document.getElementById('modal-client').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modal-client').classList.remove('show');
+}
+
+// ════════════════════════════════
+//  RENDER CITIES
+// ════════════════════════════════
+function renderCities() {
+  const cities = {};
+  shipments.forEach(s => {
+    if (!s.city) return;
+    if (!cities[s.city]) cities[s.city] = { total: 0, costs: [], days: [] };
+    cities[s.city].total++;
+    if (s.cost) cities[s.city].costs.push(s.cost);
+    if (s.deliveredDate) {
+      const d = (new Date(s.deliveredDate) - new Date(s.addedDate)) / 86400000;
+      if (d >= 0) cities[s.city].days.push(d);
+    }
+  });
+
+  const el = document.getElementById('city-list');
+  const sorted = Object.entries(cities).sort((a, b) => b[1].total - a[1].total);
+  const maxTotal = sorted[0]?.[1].total || 1;
+
+  if (!sorted.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🗺️</div><p>Agrega envíos con ciudad para ver estadísticas</p></div>';
+    return;
+  }
+
+  el.innerHTML = sorted.map(([city, data]) => {
+    const avgCost = data.costs.length ? (data.costs.reduce((a, b) => a + b, 0) / data.costs.length).toFixed(2) : '-';
+    const avgDay  = data.days.length ? Math.round(data.days.reduce((a, b) => a + b, 0) / data.days.length) : '-';
+    const pct = (data.total / maxTotal * 100).toFixed(0);
+
+    return `
+      <div class="city-row">
+        <div class="city-name">📍 ${city}</div>
+        <div class="city-bar-wrap"><div class="city-bar" style="width:${pct}%"></div></div>
+        <div class="city-stats-vals">
+          <div class="city-val">
+            <div class="city-val-num">${data.total}</div>
+            <div class="city-val-lbl">envíos</div>
+          </div>
+          <div class="city-val">
+            <div class="city-val-num">${avgDay !== '-' ? avgDay + 'd' : '-'}</div>
+            <div class="city-val-lbl">prom. días</div>
+          </div>
+          <div class="city-val">
+            <div class="city-val-num">${avgCost !== '-' ? 'S/' + avgCost : '-'}</div>
+            <div class="city-val-lbl">prom. costo</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ════════════════════════════════
+//  RENDER REPORTS
+// ════════════════════════════════
+function initReportMonths() {
+  const sel = document.getElementById('report-month');
+  const months = {};
+  shipments.forEach(s => {
+    const d = new Date(s.addedDate);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    months[key] = true;
+  });
+  const now = new Date();
+  const curKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  months[curKey] = true;
+
+  sel.innerHTML = Object.keys(months).sort().reverse().map(k => {
+    const [y, m] = k.split('-');
+    const label = new Date(y, m-1).toLocaleString('es-PE', { month: 'long', year: 'numeric' });
+    return `<option value="${k}">${label}</option>`;
+  }).join('');
+}
+
+function renderReports() {
+  initReportMonths();
+  const val = document.getElementById('report-month').value;
+  if (!val) return;
+  const [y, m] = val.split('-').map(Number);
+
+  const mes = shipments.filter(s => {
+    const d = new Date(s.addedDate);
+    return d.getMonth() + 1 === m && d.getFullYear() === y;
+  });
+
+  document.getElementById('r-total').textContent    = mes.length;
+  document.getElementById('r-costo').textContent    = 'S/' + mes.reduce((a,s) => a+s.cost, 0).toFixed(0);
+  document.getElementById('r-valor').textContent    = 'S/' + mes.reduce((a,s) => a+s.value, 0).toFixed(0);
+  document.getElementById('r-clientes').textContent = [...new Set(mes.map(s => s.client))].length;
+
+  // Top clients
+  const clientCount = {};
+  mes.forEach(s => { clientCount[s.client] = (clientCount[s.client] || 0) + 1; });
+  const topC = Object.entries(clientCount).sort((a,b) => b[1]-a[1]).slice(0,5);
+  document.getElementById('r-top-clients').innerHTML = topC.length
+    ? topC.map(([c, n], i) => `
+        <div class="city-row">
+          <div class="city-name">${['🥇','🥈','🥉','4️⃣','5️⃣'][i]} ${c}</div>
+          <div class="city-val"><div class="city-val-num">${n}</div><div class="city-val-lbl">envíos</div></div>
+        </div>
+      `).join('')
+    : '<div class="empty" style="padding:1rem"><p>Sin datos</p></div>';
+
+  // Top cities
+  const cityCount = {};
+  mes.forEach(s => { if (s.city) cityCount[s.city] = (cityCount[s.city] || 0) + 1; });
+  const topCity = Object.entries(cityCount).sort((a,b) => b[1]-a[1]).slice(0,5);
+  document.getElementById('r-top-cities').innerHTML = topCity.length
+    ? topCity.map(([c, n], i) => `
+        <div class="city-row">
+          <div class="city-name">${['🥇','🥈','🥉','4️⃣','5️⃣'][i]} ${c}</div>
+          <div class="city-val"><div class="city-val-num">${n}</div><div class="city-val-lbl">envíos</div></div>
+        </div>
+      `).join('')
+    : '<div class="empty" style="padding:1rem"><p>Agrega ciudades a tus envíos</p></div>';
+}
+
+// ════════════════════════════════
+//  RENDER HISTORY
+// ════════════════════════════════
+let historialMode = 'general';
+
+function switchHistorial(mode, el) {
+  historialMode = mode;
+  document.querySelectorAll('#page-historial .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const selWrap = document.getElementById('hist-mes-selector');
+  if (mode === 'mes') {
+    selWrap.style.display = 'block';
+    initHistMonths();
+  } else {
+    selWrap.style.display = 'none';
+  }
+  document.getElementById('history-search').value = '';
+  renderHistory();
+}
+
+function initHistMonths() {
+  const sel = document.getElementById('hist-month-sel');
+  const months = {};
+  shipments.forEach(s => {
+    const d = new Date(s.addedDate);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    months[key] = true;
+  });
+  sel.innerHTML = Object.keys(months).sort().reverse().map(k => {
+    const [y, m] = k.split('-');
+    const label = new Date(y, m-1).toLocaleString('es-PE', { month: 'long', year: 'numeric' });
+    return `<option value="${k}">${label}</option>`;
+  }).join('');
+}
+
+function renderHistory() {
+  const q = document.getElementById('history-search')?.value || '';
+  let list = [...shipments].sort((a, b) => new Date(b.addedDate) - new Date(a.addedDate));
+
+  if (historialMode === 'mes') {
+    const val = document.getElementById('hist-month-sel')?.value;
+    if (val) {
+      const [y, m] = val.split('-').map(Number);
+      list = list.filter(s => {
+        const d = new Date(s.addedDate);
+        return d.getMonth() + 1 === m && d.getFullYear() === y;
+      });
+    }
+  }
+
+  if (q) {
+    const ql = q.toLowerCase();
+    list = list.filter(s =>
+      s.client.toLowerCase().includes(ql) ||
+      s.order.includes(ql) ||
+      (s.city && s.city.toLowerCase().includes(ql)) ||
+      (s.product && s.product.toLowerCase().includes(ql))
+    );
+  }
+
+  const el = document.getElementById('history-list');
+  if (!list.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📚</div><p>Sin envíos en este período</p></div>';
+    return;
+  }
+
+  if (historialMode === 'general') {
+    const groups = {};
+    list.forEach(s => {
+      const d = new Date(s.addedDate);
+      const key = d.toLocaleString('es-PE', { month: 'long', year: 'numeric' });
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(s);
+    });
+    el.innerHTML = Object.entries(groups).map(([month, items]) => {
+      const totalCost = items.reduce((a, s) => a + s.cost, 0);
+      const delivered = items.filter(s => s.status === 'delivered').length;
+      return `
+        <div style="margin-bottom:0.25rem;font-family:'Syne',sans-serif;font-size:0.8rem;color:var(--gray);text-transform:uppercase;letter-spacing:1px;padding:0.75rem 0 0.25rem">
+          ${month} &nbsp;·&nbsp; ${items.length} envíos &nbsp;·&nbsp; ${delivered} entregados${totalCost > 0 ? ' &nbsp;·&nbsp; S/' + totalCost.toFixed(0) + ' en envíos' : ''}
+        </div>
+        ${items.map(s => historialItem(s)).join('')}
+      `;
+    }).join('');
+  } else {
+    const totalCost = list.reduce((a, s) => a + s.cost, 0);
+    const totalVal  = list.reduce((a, s) => a + s.value, 0);
+    const delivered = list.filter(s => s.status === 'delivered').length;
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1rem">
+        <div class="client-stat"><div class="client-stat-val">${list.length}</div><div class="client-stat-lbl">Envíos</div></div>
+        <div class="client-stat"><div class="client-stat-val">${delivered}</div><div class="client-stat-lbl">Entregados</div></div>
+        <div class="client-stat"><div class="client-stat-val">S/${totalCost.toFixed(0)}</div><div class="client-stat-lbl">Costo envíos</div></div>
+      </div>
+      ${list.map(s => historialItem(s)).join('')}
+    `;
+  }
+}
+
+function historialItem(s) {
+  return `
+    <div class="shipment-item ${s.status}" style="margin-bottom:0.5rem">
+      <div class="si-header">
+        <div class="si-client">${s.client}</div>
+        <span class="badge badge-${s.status === 'in-transit' ? 'transit' : s.status}">${statusLabel(s.status)}</span>
+      </div>
+      <div class="si-meta">
+        <span>📋 ${s.order}</span>
+        <span>🔑 ${s.code}</span>
+        ${s.city ? `<span>📍 ${s.city}</span>` : ''}
+        ${s.product ? `<span>🛍️ ${s.product}</span>` : ''}
+        ${s.cost ? `<span>💰 S/${s.cost.toFixed(2)}</span>` : ''}
+      </div>
+      <div class="si-meta">
+        <span>📅 ${fmtDate(s.addedDate)}</span>
+        ${s.deliveredDate ? `<span>✅ Entregado: ${fmtDate(s.deliveredDate)}</span>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function searchHistory() { renderHistory(); }
+
+
+// ════════════════════════════════
+//  WHATSAPP
+// ════════════════════════════════
+function updateWAPreview() {
+  const client  = document.getElementById('f-client')?.value || '';
+  const order   = document.getElementById('f-order')?.value || '';
+  const code    = document.getElementById('f-code')?.value || '';
+  const city    = document.getElementById('f-city')?.value || '';
+  const product = document.getElementById('f-product')?.value || '';
+
+  const msg = buildWAMsg(client, order, code, city, product);
+  const el = document.getElementById('wa-preview');
+  if (el) el.textContent = msg;
+}
+
+function buildWAMsg(client, order, code, city, product) {
+  if (!client && !order) return 'Completa los datos del envío para ver el mensaje...';
+  return `Hola ${client || 'estimado/a'} 👋
+
+Te informamos que tu pedido${product ? ` de *${product}*` : ''} ha sido enviado a través de *Shalom Empresarial*.
+
+📦 *Datos de seguimiento:*
+• N° de Orden: *${order || '-'}*
+• Código: *${code || '-'}*
+${city ? `• Destino: *${city}*\n` : ''}
+🔍 *Rastrea tu pedido aquí:*
+https://shalom.com.pe/rastrea
+
+Ingresa el N° de Orden y el Código para ver el estado en tiempo real.
+
+¡Cualquier consulta, escríbenos! 😊`;
+}
+
+function copyWA() {
+  const msg = document.getElementById('wa-preview').textContent;
+  navigator.clipboard.writeText(msg).then(() => showToast('📋 Mensaje copiado', 'success'));
+}
+
+function sendWA(phone, client, order, code, city) {
+  const msg = buildWAMsg(client, order, code, city, '');
+  const url = `https://wa.me/51${phone}?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
+}
+
+// Live preview
+['f-client','f-order','f-code','f-city','f-product'].forEach(id => {
+  setTimeout(() => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateWAPreview);
+  }, 100);
+});
+
+// ════════════════════════════════
+//  SHALOM
+// ════════════════════════════════
+function openShalom() { window.open('https://shalom.com.pe/rastrea', '_blank'); }
+
+function openShalomWith(order, code) {
+  navigator.clipboard.writeText(order).catch(() => {});
+  window.open('https://shalom.com.pe/rastrea', '_blank');
+  showToast('📋 N° de orden copiado. Pégalo en Shalom', 'success');
+}
+
+// ════════════════════════════════
+//  HELPERS
+// ════════════════════════════════
+function uniqueClients() {
+  return [...new Set(shipments.map(s => s.client))];
+}
+
+function updateClientSuggestions() {
+  const dl = document.getElementById('client-suggestions');
+  if (!dl) return;
+  dl.innerHTML = uniqueClients().map(c => `<option value="${c}">`).join('');
+}
+
+function avgDeliveryDays(cs) {
+  const delivered = cs.filter(s => s.deliveredDate);
+  if (!delivered.length) return 0;
+  const total = delivered.reduce((a, s) => {
+    return a + (new Date(s.deliveredDate) - new Date(s.addedDate)) / 86400000;
+  }, 0);
+  return Math.round(total / delivered.length);
+}
+
+function statusLabel(s) {
+  return { pending: 'Pendiente', 'in-transit': 'En Tránsito', delivered: 'Entregado' }[s] || s;
+}
+
+function fmtDate(d) {
+  return new Date(d).toLocaleString('es-PE', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ════════════════════════════════
+//  INIT
+// ════════════════════════════════
+window.addEventListener('load', () => {
+  load();
+  updateClientSuggestions();
+  renderDashboard();
+  initReportMonths();
+});
+</script>
+</body>
+</html>
