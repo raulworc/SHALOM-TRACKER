@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#E63946">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Shalom Tracker">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon192.png">
+    <title>Monitor Shalom</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f1faee;
+            min-height: 100vh;
+            padding-bottom: 2rem;
+        }
+
+        .header {
+            background: #E63946;
+            color: white;
+            padding: 1.25rem 1rem;
+            padding-top: max(1.25rem, env(safe-area-inset-top));
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .header h1 { font-size: 1.25rem; font-weight: 700; }
+        .header p { font-size: 0.75rem; opacity: 0.85; margin-top: 0.2rem; }
+
+        .container { padding: 1rem; max-width: 500px; margin: 0 auto; }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1rem 0.5rem;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .stat-number { font-size: 2rem; font-weight: 800; color: #E63946; display: block; }
+        .stat-label { font-size: 0.65rem; color: #457B9D; text-transform: uppercase; font-weight: 600; margin-top: 0.2rem; }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1D3557;
+            margin-bottom: 1rem;
+        }
+
+        .form-group { margin-bottom: 0.875rem; }
+
+        label {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #457B9D;
+            text-transform: uppercase;
+            margin-bottom: 0.3rem;
+            letter-spacing: 0.5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #A8DADC;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: #f1faee;
+            color: #1D3557;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #E63946;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.875rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 0.5rem;
+        }
+
+        .btn-primary { background: #E63946; color: white; }
+        .btn-primary:active { background: #C5303D; transform: scale(0.98); }
+
+        .btn-secondary { background: #457B9D; color: white; }
+        .btn-secondary:active { background: #3a6780; transform: scale(0.98); }
+
+        .shipment-item {
+            background: #f1faee;
+            border-left: 4px solid #457B9D;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .shipment-item.in-transit {
+            border-left-color: #FFB703;
+            background: #fffbeb;
+        }
+
+        .shipment-item.delivered {
+            border-left-color: #06D6A0;
+            background: #f0fdf4;
+        }
+
+        .shipment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .shipment-client { font-weight: 700; font-size: 1rem; color: #1D3557; }
+
+        .badge {
+            padding: 0.25rem 0.625rem;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-pending { background: #A8DADC; color: #1D3557; }
+        .badge-in-transit { background: #FFB703; color: #78350f; }
+        .badge-delivered { background: #06D6A0; color: #064e3b; }
+
+        .shipment-detail {
+            font-size: 0.8rem;
+            color: #457B9D;
+            margin-bottom: 0.25rem;
+        }
+
+        .shipment-detail span { font-weight: 700; color: #1D3557; }
+
+        .delivered-date {
+            font-size: 0.8rem;
+            color: #06D6A0;
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .btn-small {
+            flex: 1;
+            padding: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-transit { background: #FFB703; color: #78350f; }
+        .btn-delivered { background: #06D6A0; color: #064e3b; }
+        .btn-shalom { background: #E63946; color: white; }
+        .btn-delete { background: #fee2e2; color: #dc2626; }
+
+        .btn-small:active { transform: scale(0.96); }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #A8DADC;
+        }
+
+        .empty-state .icon { font-size: 3rem; margin-bottom: 0.5rem; }
+        .empty-state p { font-size: 0.9rem; }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1D3557;
+            color: white;
+            padding: 0.875rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            white-space: nowrap;
+            max-width: 90vw;
+            text-align: center;
+        }
+
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.success { background: #06D6A0; color: #064e3b; }
+        .toast.error { background: #E63946; color: white; }
+
+        /* Notification permission banner */
+        .notif-banner {
+            background: #457B9D;
+            color: white;
+            padding: 0.875rem 1rem;
+            text-align: center;
+            font-size: 0.875rem;
+            display: none;
+        }
+
+        .notif-banner.show { display: block; }
+        .notif-banner button {
+            background: white;
+            color: #457B9D;
+            border: none;
+            padding: 0.375rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-left: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="notif-banner" id="notifBanner">
+        🔔 Activa notificaciones para saber cuando lleguen tus pedidos
+        <button onclick="requestNotifications()">Activar</button>
+    </div>
+
+    <div class="header">
+        <h1>📦 Monitor Shalom</h1>
+        <p>Tu negocio automatizado</p>
+    </div>
+
+    <div class="container">
+
+        <div class="stats">
+            <div class="stat-card">
+                <span class="stat-number" id="statTotal">0</span>
+                <span class="stat-label">Total</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="statTransit">0</span>
+                <span class="stat-label">Tránsito</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="statDelivered">0</span>
+                <span class="stat-label">Entregados</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">➕ Agregar Envío</div>
+
+            <div class="form-group">
+                <label>Cliente</label>
+                <input type="text" id="clientName" placeholder="Nombre del cliente">
+            </div>
+            <div class="form-group">
+                <label>N° de Orden</label>
+                <input type="number" id="orderNumber" placeholder="Ej: 9560819">
+            </div>
+            <div class="form-group">
+                <label>Código de Orden</label>
+                <input type="text" id="orderCode" placeholder="Ej: C7P9">
+            </div>
+
+            <button class="btn btn-primary" onclick="addShipment()">Agregar Envío</button>
+            <button class="btn btn-secondary" onclick="checkAllManual()" style="margin-top: 0.5rem;">🔄 Verificar Todos en Shalom</button>
+        </div>
+
+        <div class="card">
+            <div class="card-title">📋 Mis Envíos</div>
+            <div id="shipmentList">
+                <div class="empty-state">
+                    <div class="icon">📭</div>
+                    <p>No hay envíos registrados.<br>Agrega tu primer envío arriba.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let shipments = [];
+
+        // ─── INICIO ───────────────────────────────────────
+        window.addEventListener('load', () => {
+            loadShipments();
+            registerServiceWorker();
+            checkNotificationPermission();
+        });
+
+        // ─── SERVICE WORKER ───────────────────────────────
+        async function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                try {
+                    await navigator.serviceWorker.register('sw.js');
+                    console.log('Service Worker registrado');
+                } catch (e) {
+                    console.error('Error registrando SW:', e);
+                }
+            }
+        }
+
+        // ─── NOTIFICACIONES ───────────────────────────────
+        function checkNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                document.getElementById('notifBanner').classList.add('show');
+            }
+        }
+
+        async function requestNotifications() {
+            const permission = await Notification.requestPermission();
+            document.getElementById('notifBanner').classList.remove('show');
+            if (permission === 'granted') {
+                showToast('✅ Notificaciones activadas', 'success');
+            } else {
+                showToast('⚠️ Sin notificaciones no podrás recibir alertas', 'error');
+            }
+        }
+
+        function sendNotification(title, body) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(title, {
+                    body,
+                    icon: 'icon192.png',
+                    badge: 'icon192.png'
+                });
+            }
+        }
+
+        // ─── STORAGE ──────────────────────────────────────
+        function loadShipments() {
+            const stored = localStorage.getItem('shalomShipments');
+            shipments = stored ? JSON.parse(stored) : [];
+            render();
+            updateStats();
+        }
+
+        function saveShipments() {
+            localStorage.setItem('shalomShipments', JSON.stringify(shipments));
+        }
+
+        // ─── AGREGAR ENVÍO ────────────────────────────────
+        function addShipment() {
+            const clientName = document.getElementById('clientName').value.trim();
+            const orderNumber = document.getElementById('orderNumber').value.trim();
+            const orderCode = document.getElementById('orderCode').value.trim();
+
+            if (!clientName || !orderNumber || !orderCode) {
+                showToast('⚠️ Completa todos los campos', 'error');
+                return;
+            }
+
+            const shipment = {
+                id: Date.now(),
+                clientName,
+                orderNumber,
+                orderCode,
+                status: 'pending',
+                addedDate: new Date().toISOString(),
+                lastChecked: null,
+                deliveredDate: null
+            };
+
+            shipments.unshift(shipment);
+            saveShipments();
+            render();
+            updateStats();
+
+            document.getElementById('clientName').value = '';
+            document.getElementById('orderNumber').value = '';
+            document.getElementById('orderCode').value = '';
+
+            showToast('✅ Envío agregado', 'success');
+        }
+
+        // ─── VER EN SHALOM ────────────────────────────────
+        function openShalom(orderNumber, orderCode) {
+            // Abre Shalom con los datos copiados al portapapeles
+            navigator.clipboard.writeText(orderNumber).catch(() => {});
+            const url = `https://shalom.com.pe/rastrea`;
+            window.open(url, '_blank');
+            showToast('📋 N° de orden copiado. Pégalo en Shalom', 'success');
+        }
+
+        // Abrir todos en Shalom de a uno
+        async function checkAllManual() {
+            const active = shipments.filter(s => s.status !== 'delivered');
+            if (active.length === 0) {
+                showToast('No hay envíos activos para verificar', 'error');
+                return;
+            }
+            showToast(`Abriendo ${active.length} envíos en Shalom...`, 'success');
+            for (const s of active) {
+                await new Promise(r => setTimeout(r, 800));
+                openShalom(s.orderNumber, s.orderCode);
+            }
+        }
+
+        // ─── ACTUALIZAR ESTADO ────────────────────────────
+        function updateStatus(id, newStatus) {
+            const shipment = shipments.find(s => s.id === id);
+            if (!shipment) return;
+
+            const oldStatus = shipment.status;
+            shipment.status = newStatus;
+            shipment.lastChecked = new Date().toISOString();
+
+            if (newStatus === 'delivered') {
+                shipment.deliveredDate = new Date().toISOString();
+                sendNotification(
+                    '🎉 ¡Envío Entregado!',
+                    `El pedido de ${shipment.clientName} llegó a destino.`
+                );
+                showToast(`🎉 ¡${shipment.clientName} recibió su pedido!`, 'success');
+            } else if (newStatus === 'in-transit') {
+                sendNotification(
+                    '📦 Envío en Tránsito',
+                    `El pedido de ${shipment.clientName} está en camino.`
+                );
+                showToast(`📦 ${shipment.clientName} - En tránsito`, 'success');
+            }
+
+            saveShipments();
+            render();
+            updateStats();
+        }
+
+        // ─── ELIMINAR ─────────────────────────────────────
+        function deleteShipment(id) {
+            if (!confirm('¿Eliminar este envío?')) return;
+            shipments = shipments.filter(s => s.id !== id);
+            saveShipments();
+            render();
+            updateStats();
+            showToast('🗑️ Envío eliminado', 'success');
+        }
+
+        // ─── RENDER ───────────────────────────────────────
+        function render() {
+            const container = document.getElementById('shipmentList');
+
+            if (shipments.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <p>No hay envíos registrados.<br>Agrega tu primer envío arriba.</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = shipments.map(s => `
+                <div class="shipment-item ${s.status}">
+                    <div class="shipment-header">
+                        <div class="shipment-client">${s.clientName}</div>
+                        <span class="badge badge-${s.status}">${statusText(s.status)}</span>
+                    </div>
+                    <div class="shipment-detail">N° Orden: <span>${s.orderNumber}</span></div>
+                    <div class="shipment-detail">Código: <span>${s.orderCode}</span></div>
+                    <div class="shipment-detail">Agregado: <span>${formatDate(s.addedDate)}</span></div>
+                    ${s.lastChecked ? `<div class="shipment-detail">Verificado: <span>${formatDate(s.lastChecked)}</span></div>` : ''}
+                    ${s.deliveredDate ? `<div class="delivered-date">✅ Entregado el ${formatDate(s.deliveredDate)}</div>` : ''}
+                    <div class="item-actions">
+                        <button class="btn-small btn-shalom" onclick="openShalom('${s.orderNumber}', '${s.orderCode}')">🔍 Ver</button>
+                        ${s.status !== 'in-transit' && s.status !== 'delivered' ? `
+                            <button class="btn-small btn-transit" onclick="updateStatus(${s.id}, 'in-transit')">📦 Tránsito</button>
+                        ` : ''}
+                        ${s.status !== 'delivered' ? `
+                            <button class="btn-small btn-delivered" onclick="updateStatus(${s.id}, 'delivered')">✅ Entregado</button>
+                        ` : ''}
+                        <button class="btn-small btn-delete" onclick="deleteShipment(${s.id})">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ─── STATS ────────────────────────────────────────
+        function updateStats() {
+            document.getElementById('statTotal').textContent = shipments.length;
+            document.getElementById('statTransit').textContent = shipments.filter(s => s.status === 'in-transit').length;
+            document.getElementById('statDelivered').textContent = shipments.filter(s => s.status === 'delivered').length;
+        }
+
+        // ─── HELPERS ──────────────────────────────────────
+        function statusText(status) {
+            return { pending: 'Pendiente', 'in-transit': 'En Tránsito', delivered: 'Entregado' }[status] || status;
+        }
+
+        function formatDate(d) {
+            return new Date(d).toLocaleString('es-PE', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+    </script>
+</body>
+</html>
