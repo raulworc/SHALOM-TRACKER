@@ -177,6 +177,7 @@ select option { background:var(--navy-mid); }
 .msg-type { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:0.25rem 0.75rem; border-radius:20px; }
 .msg-type.transit { background:rgba(244,162,97,0.2); color:var(--orange); }
 .msg-type.delivered { background:rgba(6,214,160,0.2); color:var(--green); }
+.msg-type.pending { background:rgba(68,123,157,0.2); color:var(--blue); }
 textarea { resize:vertical; min-height:100px; }
 
 /* ── FAB (botón flotante móvil) ── */
@@ -431,13 +432,22 @@ textarea { resize:vertical; min-height:100px; }
         <button class="btn btn-sm btn-orange" onclick="saveMessages()">💾 Guardar</button>
       </div>
 
-      <div class="card">
+      <div class="card" style="margin-bottom:1rem">
         <div class="section-title"><span class="msg-type delivered">✅ Entregado</span></div>
         <div class="form-group">
-          <label>Mensaje cuando el pedido fue entregado</label>
+          <label>Mensaje cuando el pedido fue entregado (pedidos Pagados)</label>
           <textarea id="msg-delivered" rows="6"></textarea>
         </div>
         <button class="btn btn-sm btn-green" onclick="saveMessages()">💾 Guardar</button>
+      </div>
+
+      <div class="card">
+        <div class="section-title"><span class="msg-type pending">🔸 Entregado — Falta completar pago</span></div>
+        <div class="form-group">
+          <label>Mensaje cuando el pedido llegó pero está con 50% Adelanto (aún no se envía la clave)</label>
+          <textarea id="msg-delivered-partial" rows="6"></textarea>
+        </div>
+        <button class="btn btn-sm" style="background:var(--blue);color:white" onclick="saveMessages()">💾 Guardar</button>
       </div>
     </div>
   </div>
@@ -541,6 +551,20 @@ const DEFAULT_MSG_DELIVERED = `Hola 👋
 
 Agradecemos su preferencia. Esperamos atenderle nuevamente.`;
 
+const DEFAULT_MSG_DELIVERED_PARTIAL = `Hola 👋
+
+¡Tu pedido ya llegó a destino! ✅
+
+📦 Tu pedido está disponible en la agencia *Shalom* de *{ciudad}*, pendiente de recojo.
+
+• N° de Orden: *{orden}*
+
+💳 Para poder entregarte la clave de recojo, nos falta que completes el pago restante del pedido.
+
+Apenas confirmes el pago, te enviamos la clave para que puedas recogerlo 🙌
+
+¡Cualquier consulta, escríbenos! 😊`;
+
 // ═══════════════════════════════════
 //  FIREBASE (compat SDK - funciona con onclick)
 // ═══════════════════════════════════
@@ -604,20 +628,25 @@ async function removeShipment(id) {
 function loadMessages() {
   const t = localStorage.getItem('msgTransit');
   const d = localStorage.getItem('msgDelivered');
-  document.getElementById('msg-transit').value   = t || DEFAULT_MSG_TRANSIT;
-  document.getElementById('msg-delivered').value = d || DEFAULT_MSG_DELIVERED;
+  const dp = localStorage.getItem('msgDeliveredPartial');
+  document.getElementById('msg-transit').value           = t  || DEFAULT_MSG_TRANSIT;
+  document.getElementById('msg-delivered').value         = d  || DEFAULT_MSG_DELIVERED;
+  document.getElementById('msg-delivered-partial').value = dp || DEFAULT_MSG_DELIVERED_PARTIAL;
 }
 
 function saveMessages() {
-  const t = document.getElementById('msg-transit').value;
-  const d = document.getElementById('msg-delivered').value;
-  localStorage.setItem('msgTransit',   t);
-  localStorage.setItem('msgDelivered', d);
+  const t  = document.getElementById('msg-transit').value;
+  const d  = document.getElementById('msg-delivered').value;
+  const dp = document.getElementById('msg-delivered-partial').value;
+  localStorage.setItem('msgTransit',          t);
+  localStorage.setItem('msgDelivered',        d);
+  localStorage.setItem('msgDeliveredPartial', dp);
   showToast('💾 Mensajes guardados', 'success');
 }
 
-function getMsgTransit()   { return localStorage.getItem('msgTransit')   || DEFAULT_MSG_TRANSIT; }
-function getMsgDelivered() { return localStorage.getItem('msgDelivered') || DEFAULT_MSG_DELIVERED; }
+function getMsgTransit()          { return localStorage.getItem('msgTransit')          || DEFAULT_MSG_TRANSIT; }
+function getMsgDelivered()        { return localStorage.getItem('msgDelivered')        || DEFAULT_MSG_DELIVERED; }
+function getMsgDeliveredPartial() { return localStorage.getItem('msgDeliveredPartial') || DEFAULT_MSG_DELIVERED_PARTIAL; }
 
 // ═══════════════════════════════════
 //  NAVIGATION
@@ -852,7 +881,11 @@ function showShipmentModal(id) {
   if (!s) return;
 
   const msgTransit   = buildMsg(getMsgTransit(), s);
-  const msgDelivered = buildMsg(getMsgDelivered(), s);
+  const msgDelivered = s.paymentStatus === 'partial'
+    ? buildMsg(getMsgDeliveredPartial(), s)
+    : buildMsg(getMsgDelivered(), s);
+  const deliveredLabel = s.paymentStatus === 'partial' ? '🔸 Entregado — Falta completar pago' : '✅ Entregado';
+  const deliveredColor = s.paymentStatus === 'partial' ? 'var(--blue)' : 'var(--green)';
   // Store in global so onclick can access without escaping issues
   window._currentMsgTransit   = msgTransit;
   window._currentMsgDelivered = msgDelivered;
@@ -905,9 +938,9 @@ function showShipmentModal(id) {
         <button class="btn btn-sm btn-orange" style="margin-top:0.5rem;width:100%" onclick="copyText(window._currentMsgTransit)">📋 Copiar mensaje</button>
       </div>
       <div>
-        <div style="font-size:0.75rem;color:var(--green);font-weight:700;text-transform:uppercase;margin-bottom:0.5rem">✅ Entregado</div>
+        <div style="font-size:0.75rem;color:${deliveredColor};font-weight:700;text-transform:uppercase;margin-bottom:0.5rem">${deliveredLabel}</div>
         <div class="wa-box" style="font-size:0.8rem">${msgDelivered}</div>
-        <button class="btn btn-sm btn-green" style="margin-top:0.5rem;width:100%" onclick="copyText(window._currentMsgDelivered)">📋 Copiar mensaje</button>
+        <button class="btn btn-sm" style="margin-top:0.5rem;width:100%;background:${deliveredColor};color:white" onclick="copyText(window._currentMsgDelivered)">📋 Copiar mensaje</button>
       </div>
   `;
   document.getElementById('modal-shipment').classList.add('show');
