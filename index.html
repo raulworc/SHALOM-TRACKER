@@ -113,6 +113,20 @@ select option { background:var(--navy-mid); }
 .badge-transit { background:rgba(244,162,97,0.2); color:var(--orange); border:1px solid var(--orange); }
 .badge-delivered { background:rgba(6,214,160,0.2); color:var(--green); border:1px solid var(--green); }
 
+/* ── ALERTAS (compact) ── */
+.alert-group-title { font-family:'Syne',sans-serif; font-size:0.75rem; color:var(--gray); text-transform:uppercase; letter-spacing:1px; padding:0.4rem 0.1rem; }
+.alert-list { max-height:220px; overflow-y:auto; border:1px solid var(--border); border-radius:10px; }
+.alert-row { display:flex; align-items:center; justify-content:space-between; gap:0.5rem; padding:0.55rem 0.7rem; border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.15s; }
+.alert-row:last-child { border-bottom:none; }
+.alert-row:hover { background:var(--navy-light); }
+.alert-row-info { min-width:0; }
+.alert-row-name { font-size:0.8rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.alert-row-meta { font-size:0.7rem; color:var(--gray); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.alert-row-right { display:flex; align-items:center; gap:0.4rem; flex-shrink:0; }
+.alert-days-badge { font-size:0.6rem; padding:0.2rem 0.5rem; border-radius:12px; white-space:nowrap; font-weight:700; }
+.alert-check-btn { width:26px; height:26px; border-radius:50%; border:1px solid var(--green); background:rgba(6,214,160,0.15); color:var(--green); font-size:0.8rem; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.alert-check-btn:hover { background:var(--green); color:var(--navy); }
+
 /* ── TABS ── */
 .tabs { display:flex; gap:0.5rem; margin-bottom:1.5rem; background:var(--navy-light); padding:0.3rem; border-radius:12px; }
 .tab { flex:1; padding:0.625rem; text-align:center; border-radius:10px; cursor:pointer; font-size:0.8rem; font-weight:600; color:var(--gray); transition:all 0.2s; }
@@ -891,7 +905,7 @@ function showShipmentModal(id) {
       <div class="si-header">
         <div class="si-client" style="font-size:1.1rem">${s.client}</div>
         <span class="badge badge-${s.status === 'in-transit' ? 'transit' : s.status}">${statusLabel(s.status)}</span>
-        <span class="badge ${s.paymentStatus === 'partial' ? 'badge-pending' : 'badge-delivered'}">${s.paymentStatus === 'partial' ? '🔸 50% Adelanto' : '✅ Pagado'}</span>
+        ${s.paymentStatus === 'partial' ? '<span class="badge badge-pending">🔸 50% Adelanto</span>' : ''}
       </div>
       <div class="si-meta" style="font-size:0.85rem">
         <span>📋 <strong>${s.order}</strong></span>
@@ -972,33 +986,32 @@ function renderAlerts() {
   let html = '';
 
   if (delayed.length) {
-    html += `<div style="font-family:'Syne',sans-serif;font-size:0.8rem;color:var(--orange);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.5rem">🚚 En tránsito hace ${ALERT_TRANSIT_DAYS}+ días (${delayed.length})</div>`;
-    html += delayed.map(s => `
-      <div class="shipment-item ${s.status} clickable" onclick="showShipmentModal('${s.id}')" style="margin-bottom:0.5rem">
-        <div class="si-header">
-          <div class="si-client">${s.client}</div>
-          <span class="badge badge-transit">${daysSince(s.addedDate)}d en tránsito</span>
+    html += `<div class="alert-group-title" style="color:var(--orange)">🚚 En tránsito hace ${ALERT_TRANSIT_DAYS}+ días (${delayed.length})</div>`;
+    html += `<div class="alert-list">` + delayed.map(s => `
+      <div class="alert-row" onclick="showShipmentModal('${s.id}')">
+        <div class="alert-row-info">
+          <div class="alert-row-name">${s.client}</div>
+          <div class="alert-row-meta">📋 ${s.order}${s.city ? ' · 📍 '+s.city : ''}</div>
         </div>
-        <div class="si-meta">
-          <span>📋 ${s.order}</span>
-          ${s.city ? `<span>📍 ${s.city}</span>` : ''}
+        <div class="alert-row-right">
+          <span class="badge badge-transit alert-days-badge">${daysSince(s.addedDate)}d</span>
         </div>
-      </div>`).join('');
+      </div>`).join('') + `</div>`;
   }
 
   if (pendingPay.length) {
-    html += `<div style="font-family:'Syne',sans-serif;font-size:0.8rem;color:var(--blue);text-transform:uppercase;letter-spacing:1px;margin:${delayed.length ? '1rem' : '0'} 0 0.5rem">💰 Pago pendiente — 50% Adelanto (${pendingPay.length})</div>`;
-    html += pendingPay.map(s => `
-      <div class="shipment-item ${s.status} clickable" onclick="showShipmentModal('${s.id}')" style="margin-bottom:0.5rem">
-        <div class="si-header">
-          <div class="si-client">${s.client}</div>
-          <span class="badge badge-pending">${daysSince(s.addedDate)}d pendiente</span>
+    html += `<div class="alert-group-title" style="color:var(--blue);margin-top:${delayed.length ? '0.75rem' : '0'}">💰 Pago pendiente — 50% Adelanto (${pendingPay.length})</div>`;
+    html += `<div class="alert-list">` + pendingPay.map(s => `
+      <div class="alert-row" onclick="showShipmentModal('${s.id}')">
+        <div class="alert-row-info">
+          <div class="alert-row-name">${s.client}</div>
+          <div class="alert-row-meta">📋 ${s.order} · ${s.status === 'delivered' ? '✅ Ya llegó — falta cobrar' : '🚚 Aún en tránsito'}</div>
         </div>
-        <div class="si-meta">
-          <span>📋 ${s.order}</span>
-          <span>${s.status === 'delivered' ? '✅ Ya llegó — falta cobrar' : '🚚 Aún en tránsito'}</span>
+        <div class="alert-row-right">
+          <span class="badge badge-pending alert-days-badge">${daysSince(s.addedDate)}d</span>
+          <button class="alert-check-btn" title="Marcar como pagado" onclick="event.stopPropagation(); markAsPaid('${s.id}')">✔</button>
         </div>
-      </div>`).join('');
+      </div>`).join('') + `</div>`;
   }
 
   el.innerHTML = html;
@@ -1069,7 +1082,7 @@ function renderShipments() {
       <div class="si-header">
         <div class="si-client" style="cursor:pointer" onclick="showShipmentModal('${s.id}')">${s.client} ${s.phone ? `· ${s.phone}` : ''}</div>
         <span class="badge badge-${s.status === 'in-transit' ? 'transit' : s.status}">${statusLabel(s.status)}</span>
-        <span class="badge ${s.paymentStatus === 'partial' ? 'badge-pending' : 'badge-delivered'}">${s.paymentStatus === 'partial' ? '🔸 50%' : '✅ Pagado'}</span>
+        ${s.paymentStatus === 'partial' ? '<span class="badge badge-pending">🔸 50%</span>' : ''}
       </div>
       <div class="si-meta">
         <span>📋 ${s.order}</span>
@@ -1342,7 +1355,7 @@ function histItem(s) {
       <div class="si-header">
         <div class="si-client">${s.client}</div>
         <span class="badge badge-${s.status==='in-transit'?'transit':s.status}">${statusLabel(s.status)}</span>
-        <span class="badge ${s.paymentStatus === 'partial' ? 'badge-pending' : 'badge-delivered'}">${s.paymentStatus === 'partial' ? '🔸 50%' : '✅ Pagado'}</span>
+        ${s.paymentStatus === 'partial' ? '<span class="badge badge-pending">🔸 50%</span>' : ''}
       </div>
       <div class="si-meta">
         <span>📋 ${s.order}</span>
