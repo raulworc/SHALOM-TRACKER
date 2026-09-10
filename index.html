@@ -270,10 +270,7 @@ textarea { resize:vertical; min-height:100px; }
       <div class="stat-card blue"><div class="stat-icon">👥</div><div class="stat-value" id="d-clients">0</div><div class="stat-label">Clientes</div></div>
     </div>
     <div class="card" id="alerts-card" style="margin-bottom:1.5rem">
-      <div class="section-title" style="justify-content:space-between;flex-wrap:wrap;gap:0.5rem">
-        <span>⚠️ Alertas de seguimiento</span>
-        <button class="btn btn-ghost btn-sm" id="btn-mark-all-delivered" onclick="markAllDelivered()" style="font-size:0.65rem;padding:0.35rem 0.7rem">✅ Marcar todos como Entregados</button>
-      </div>
+      <div class="section-title">💰 Pagos Pendientes — 50% Adelanto</div>
       <div id="alerts-list"></div>
     </div>
     <div class="grid-2">
@@ -961,7 +958,6 @@ function showShipmentModal(id) {
 // ═══════════════════════════════════
 //  ALERTAS (seguimiento automático)
 // ═══════════════════════════════════
-const ALERT_TRANSIT_DAYS = 5;  // días en tránsito antes de marcarlo como demorado
 const ALERT_PAYMENT_DAYS = 2;  // días con 50% pendiente antes de resaltarlo
 
 function daysSince(dateStr) {
@@ -973,38 +969,16 @@ function renderAlerts() {
   const el = document.getElementById('alerts-list');
   if (!el) return;
 
-  const delayed = shipments
-    .filter(s => s.status === 'in-transit' && daysSince(s.addedDate) >= ALERT_TRANSIT_DAYS)
-    .sort((a,b) => daysSince(b.addedDate) - daysSince(a.addedDate));
-
   const pendingPay = shipments
     .filter(s => s.paymentStatus === 'partial' && (s.status === 'delivered' || daysSince(s.addedDate) >= ALERT_PAYMENT_DAYS))
     .sort((a,b) => daysSince(b.addedDate) - daysSince(a.addedDate));
 
-  if (!delayed.length && !pendingPay.length) {
-    el.innerHTML = '<div class="empty" style="padding:1.5rem 0"><div class="empty-icon">✅</div><p>Todo al día — sin envíos demorados ni pagos pendientes</p></div>';
+  if (!pendingPay.length) {
+    el.innerHTML = '<div class="empty" style="padding:1.5rem 0"><div class="empty-icon">✅</div><p>Sin pagos pendientes por ahora</p></div>';
     return;
   }
 
-  let html = '';
-
-  if (delayed.length) {
-    html += `<div class="alert-group-title" style="color:var(--orange)">🚚 En tránsito hace ${ALERT_TRANSIT_DAYS}+ días (${delayed.length})</div>`;
-    html += `<div class="alert-list">` + delayed.map(s => `
-      <div class="alert-row" onclick="showShipmentModal('${s.id}')">
-        <div class="alert-row-info">
-          <div class="alert-row-name">${s.client}</div>
-          <div class="alert-row-meta">📋 ${s.order}${s.city ? ' · 📍 '+s.city : ''}</div>
-        </div>
-        <div class="alert-row-right">
-          <span class="badge badge-transit alert-days-badge">${daysSince(s.addedDate)}d</span>
-        </div>
-      </div>`).join('') + `</div>`;
-  }
-
-  if (pendingPay.length) {
-    html += `<div class="alert-group-title" style="color:var(--blue);margin-top:${delayed.length ? '0.75rem' : '0'}">💰 Pago pendiente — 50% Adelanto (${pendingPay.length})</div>`;
-    html += `<div class="alert-list">` + pendingPay.map(s => `
+  el.innerHTML = `<div class="alert-list">` + pendingPay.map(s => `
       <div class="alert-row" onclick="showShipmentModal('${s.id}')">
         <div class="alert-row-info">
           <div class="alert-row-name">${s.client}</div>
@@ -1015,41 +989,6 @@ function renderAlerts() {
           <button class="alert-check-btn" title="Marcar como pagado" onclick="event.stopPropagation(); markAsPaid('${s.id}')">✔</button>
         </div>
       </div>`).join('') + `</div>`;
-  }
-
-  el.innerHTML = html;
-}
-
-async function markAllDelivered() {
-  const pending = shipments.filter(s => s.status !== 'delivered');
-  if (!pending.length) { showToast('✅ Ya no hay envíos en tránsito', 'success'); return; }
-
-  const ok = confirm(`¿Marcar los ${pending.length} envíos en tránsito como Entregados? Es una acción masiva y no se puede deshacer.`);
-  if (!ok) return;
-
-  const btn = document.getElementById('btn-mark-all-delivered');
-  if (btn) { btn.disabled = true; btn.textContent = 'Actualizando...'; }
-
-  try {
-    // Firestore permite máx. 500 escrituras por batch — se divide en bloques
-    for (let i = 0; i < pending.length; i += 450) {
-      const chunk = pending.slice(i, i + 450);
-      const batch = db.batch();
-      chunk.forEach(s => {
-        batch.update(col.doc(s.id), {
-          status: 'delivered',
-          deliveredDate: s.deliveredDate || new Date().toISOString()
-        });
-      });
-      await batch.commit();
-    }
-    showToast(`✅ ${pending.length} envíos marcados como Entregados`, 'success');
-  } catch (e) {
-    showToast('❌ Error al actualizar. Verifica conexión.', 'error');
-    console.error(e);
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '✅ Marcar todos como Entregados'; }
-  }
 }
 
 // ═══════════════════════════════════
