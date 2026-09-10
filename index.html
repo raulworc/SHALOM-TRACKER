@@ -304,11 +304,16 @@ textarea { resize:vertical; min-height:100px; }
     <div style="max-width:600px">
       <div class="card">
         <div class="section-title">📦 Datos del Envío</div>
-        <div class="form-group">
-            <label>Cliente *</label>
-            <input type="text" id="f-client" placeholder="Nombre completo" list="client-suggestions">
-            <datalist id="client-suggestions"></datalist>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nombre *</label>
+            <input type="text" id="f-client-nombre" placeholder="Ej: Raúl">
           </div>
+          <div class="form-group">
+            <label>Apellidos</label>
+            <input type="text" id="f-client-apellidos" placeholder="Ej: Cervantes Andrade">
+          </div>
+        </div>
         <div class="form-row">
           <div class="form-group">
             <label>N° de Orden *</label>
@@ -528,7 +533,7 @@ let currentSearch = '';
 let historialMode = 'general';
 let currentPaymentStatus = 'paid';
 
-const DEFAULT_MSG_TRANSIT = `Hola 👋
+const DEFAULT_MSG_TRANSIT = `Hola *{cliente}* 👋
 
 Te informamos que tu pedido ya fue enviado a través de *Shalom*.
 
@@ -545,7 +550,7 @@ Ingresa el N° de Orden y el Código para ver el estado en tiempo real.
 
 ¡Cualquier consulta, escríbenos! 😊`;
 
-const DEFAULT_MSG_DELIVERED = `Hola 👋
+const DEFAULT_MSG_DELIVERED = `Hola *{cliente}* 👋
 
 ¡Tu pedido ya llegó a destino! ✅
 
@@ -556,7 +561,7 @@ const DEFAULT_MSG_DELIVERED = `Hola 👋
 
 Agradecemos su preferencia. Esperamos atenderle nuevamente.`;
 
-const DEFAULT_MSG_DELIVERED_PARTIAL = `Hola 👋
+const DEFAULT_MSG_DELIVERED_PARTIAL = `Hola *{cliente}* 👋
 
 Tu pedido *{orden}* ya está listo en *Shalom* *{ciudad}* ✅
 
@@ -714,12 +719,14 @@ async function markAsPaid(id) {
 //  ADD SHIPMENT
 // ═══════════════════════════════════
 async function addShipment() {
-  const client  = document.getElementById('f-client').value.trim();
-  const order   = document.getElementById('f-order').value.trim();
-  const code    = document.getElementById('f-code').value.trim();
-  const pin     = document.getElementById('f-pin').value.trim();
+  const nombre    = document.getElementById('f-client-nombre').value.trim();
+  const apellidos = document.getElementById('f-client-apellidos').value.trim();
+  const client    = [nombre, apellidos].filter(Boolean).join(' ');
+  const order     = document.getElementById('f-order').value.trim();
+  const code      = document.getElementById('f-code').value.trim();
+  const pin       = document.getElementById('f-pin').value.trim();
 
-  if (!client || !order || !code || !pin) { showToast('⚠️ Cliente, N° Orden, Código y Clave son obligatorios', 'error'); return; }
+  if (!client || !order || !code || !pin) { showToast('⚠️ Nombre, N° Orden, Código y Clave son obligatorios', 'error'); return; }
   if (!/^\d{4}$/.test(pin)) { showToast('⚠️ La Clave de Recojo debe tener 4 dígitos', 'error'); return; }
 
   // Disable button to prevent duplicates
@@ -762,7 +769,7 @@ async function addShipment() {
       lastChecked:   null
     });
 
-    ['f-client','f-order','f-code','f-pin','f-city','f-cost','f-value']
+    ['f-client-nombre','f-client-apellidos','f-order','f-code','f-pin','f-city','f-cost','f-value']
       .forEach(id => document.getElementById(id).value = '');
     resetPaymentStatus();
 
@@ -1322,7 +1329,7 @@ function buildMsg(template, s) {
 
 function updateWAPreview() {
   const s = {
-    client:  document.getElementById('f-client')?.value  || '',
+    client:  [document.getElementById('f-client-nombre')?.value || '', document.getElementById('f-client-apellidos')?.value || ''].filter(Boolean).join(' '),
     order:   document.getElementById('f-order')?.value   || '',
     code:    document.getElementById('f-code')?.value    || '',
     pin:     document.getElementById('f-pin')?.value     || '',
@@ -1384,7 +1391,7 @@ function sendWA(phone, msg) {
   window.open(`https://wa.me/51${phone}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-['f-client','f-order','f-code','f-pin','f-city'].forEach(id => {
+['f-client-nombre','f-client-apellidos','f-order','f-code','f-pin','f-city'].forEach(id => {
   setTimeout(() => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', updateWAPreview);
@@ -1457,4 +1464,3 @@ window.addEventListener('load', () => {
 </script>
 </body>
 </html>
-
