@@ -1319,7 +1319,7 @@ function buildMsg(template, s) {
     tpl = tpl.split('\n').filter(line => !line.includes('{clave}')).join('\n');
   }
   return tpl
-    .replace(/{cliente}/g, s.client || '')
+    .replace(/{cliente}/g, (s.client || '').trim().split(/\s+/)[0] || '')
     .replace(/{orden}/g,   s.order  || '')
     .replace(/{codigo}/g,  s.code   || '')
     .replace(/{clave}/g,   s.pin    || '')
