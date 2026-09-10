@@ -255,6 +255,10 @@ textarea { resize:vertical; min-height:100px; }
       <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-value" id="d-delivered">0</div><div class="stat-label">Entregados</div></div>
       <div class="stat-card blue"><div class="stat-icon">👥</div><div class="stat-value" id="d-clients">0</div><div class="stat-label">Clientes</div></div>
     </div>
+    <div class="card" id="alerts-card" style="margin-bottom:1.5rem">
+      <div class="section-title">⚠️ Alertas de seguimiento</div>
+      <div id="alerts-list"></div>
+    </div>
     <div class="grid-2">
       <div class="card">
         <div class="section-title" style="justify-content:space-between;flex-wrap:wrap;gap:0.5rem">
@@ -271,8 +275,8 @@ textarea { resize:vertical; min-height:100px; }
             <div class="report-lbl">Envíos del mes</div>
           </div>
           <div style="text-align:center;background:var(--navy-light);padding:1rem;border-radius:12px">
-            <div class="report-num" id="d-mes-costo">S/0</div>
-            <div class="report-lbl">Costo total envíos</div>
+            <div class="report-num" id="d-mes-valor">S/0</div>
+            <div class="report-lbl">Valor total pedidos</div>
           </div>
         </div>
         <div class="divider"></div>
@@ -334,15 +338,9 @@ textarea { resize:vertical; min-height:100px; }
             <input type="text" id="f-city" placeholder="Ej: Arequipa">
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Costo del envío (S/)</label>
-            <input type="number" id="f-cost" placeholder="0.00" step="0.50" min="0">
-          </div>
-          <div class="form-group">
-            <label>Valor del pedido (S/)</label>
-            <input type="number" id="f-value" placeholder="0.00" step="0.50" min="0">
-          </div>
+        <div class="form-group">
+          <label>Valor del pedido (S/)</label>
+          <input type="number" id="f-value" placeholder="0.00" step="0.50" min="0">
         </div>
         <div class="form-group">
           <label>Estado de Pago *</label>
@@ -379,7 +377,7 @@ textarea { resize:vertical; min-height:100px; }
   <div class="page" id="page-ciudades">
     <div class="card">
       <div class="section-title">📊 Estadísticas por Ciudad</div>
-      <p style="font-size:0.8rem;color:var(--gray);margin-bottom:1rem">Tiempo promedio y costo promedio calculados con tus envíos reales.</p>
+      <p style="font-size:0.8rem;color:var(--gray);margin-bottom:1rem">Tiempo promedio y valor promedio calculados con tus envíos reales.</p>
       <div id="city-list"></div>
     </div>
   </div>
@@ -389,7 +387,6 @@ textarea { resize:vertical; min-height:100px; }
     <div style="margin-bottom:1rem"><select id="report-month" onchange="renderReports()" style="max-width:220px"></select></div>
     <div class="stats-grid" style="margin-bottom:1.5rem">
       <div class="stat-card red"><div class="stat-icon">📦</div><div class="stat-value" id="r-total">0</div><div class="stat-label">Envíos del mes</div></div>
-      <div class="stat-card gold"><div class="stat-icon">💰</div><div class="stat-value" id="r-costo">S/0</div><div class="stat-label">Costo total envíos</div></div>
       <div class="stat-card green"><div class="stat-icon">🛍️</div><div class="stat-value" id="r-valor">S/0</div><div class="stat-label">Valor total pedidos</div></div>
       <div class="stat-card blue"><div class="stat-icon">👥</div><div class="stat-value" id="r-clientes">0</div><div class="stat-label">Clientes únicos</div></div>
     </div>
@@ -742,7 +739,6 @@ async function addShipment() {
     pin,
     product: '',
     city:    document.getElementById('f-city').value.trim(),
-    cost:    parseFloat(document.getElementById('f-cost').value) || 0,
     value:   parseFloat(document.getElementById('f-value').value) || 0,
     status:  'in-transit', // siempre en tránsito al agregar
     paymentStatus: currentPaymentStatus,
@@ -760,7 +756,6 @@ async function addShipment() {
       pin:     s.pin,
       product: s.product,
       city:    s.city,
-      cost:    s.cost,
       value:   s.value,
       status:  s.status,
       paymentStatus: s.paymentStatus,
@@ -769,7 +764,7 @@ async function addShipment() {
       lastChecked:   null
     });
 
-    ['f-client-nombre','f-client-apellidos','f-order','f-code','f-pin','f-city','f-cost','f-value']
+    ['f-client-nombre','f-client-apellidos','f-order','f-code','f-pin','f-city','f-value']
       .forEach(id => document.getElementById(id).value = '');
     resetPaymentStatus();
 
@@ -838,10 +833,7 @@ function showEditModal(id) {
     <div class="form-row">
       <div class="form-group"><label>Producto</label><input id="e-product" value="${s.product||''}"></div>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label>Costo envío (S/)</label><input type="number" id="e-cost" value="${s.cost||0}" step="0.5"></div>
-      <div class="form-group"><label>Valor pedido (S/)</label><input type="number" id="e-value" value="${s.value||0}" step="0.5"></div>
-    </div>
+    <div class="form-group"><label>Valor pedido (S/)</label><input type="number" id="e-value" value="${s.value||0}" step="0.5"></div>
     <button class="btn btn-primary" onclick="saveEdit('${id}')" style="margin-top:0.5rem">💾 Guardar cambios</button>
   `;
   document.getElementById('modal-edit').classList.add('show');
@@ -857,7 +849,6 @@ async function saveEdit(id) {
   s.pin     = document.getElementById('e-pin').value.trim();
   s.product = document.getElementById('e-product').value.trim();
   s.city    = document.getElementById('e-city').value.trim();
-  s.cost    = parseFloat(document.getElementById('e-cost').value) || 0;
   s.value   = parseFloat(document.getElementById('e-value').value) || 0;
   if (s.pin && !/^\d{4}$/.test(s.pin)) { showToast('⚠️ La Clave de Recojo debe tener 4 dígitos', 'error'); return; }
   try {
@@ -869,7 +860,6 @@ async function saveEdit(id) {
       pin:     s.pin,
       product: document.getElementById('e-product').value.trim(),
       city:    document.getElementById('e-city').value.trim(),
-      cost:    parseFloat(document.getElementById('e-cost').value) || 0,
       value:   parseFloat(document.getElementById('e-value').value) || 0,
     });
     closeModal('modal-edit');
@@ -915,7 +905,6 @@ function showShipmentModal(id) {
       </div>
       <div class="si-meta" style="font-size:0.85rem">
         ${s.product ? `<span>🛍️ ${s.product}</span>` : ''}
-        ${s.cost  ? `<span>💰 Envío S/${s.cost.toFixed(2)}</span>` : ''}
         ${s.value ? `<span>🛒 Pedido S/${s.value.toFixed(2)}</span>` : ''}
       </div>
       <div class="si-meta" style="font-size:0.8rem">
@@ -953,6 +942,69 @@ function showShipmentModal(id) {
 }
 
 // ═══════════════════════════════════
+//  ALERTAS (seguimiento automático)
+// ═══════════════════════════════════
+const ALERT_TRANSIT_DAYS = 5;  // días en tránsito antes de marcarlo como demorado
+const ALERT_PAYMENT_DAYS = 2;  // días con 50% pendiente antes de resaltarlo
+
+function daysSince(dateStr) {
+  if (!dateStr) return 0;
+  return Math.floor((Date.now() - new Date(dateStr)) / 86400000);
+}
+
+function renderAlerts() {
+  const el = document.getElementById('alerts-list');
+  if (!el) return;
+
+  const delayed = shipments
+    .filter(s => s.status === 'in-transit' && daysSince(s.addedDate) >= ALERT_TRANSIT_DAYS)
+    .sort((a,b) => daysSince(b.addedDate) - daysSince(a.addedDate));
+
+  const pendingPay = shipments
+    .filter(s => s.paymentStatus === 'partial' && (s.status === 'delivered' || daysSince(s.addedDate) >= ALERT_PAYMENT_DAYS))
+    .sort((a,b) => daysSince(b.addedDate) - daysSince(a.addedDate));
+
+  if (!delayed.length && !pendingPay.length) {
+    el.innerHTML = '<div class="empty" style="padding:1.5rem 0"><div class="empty-icon">✅</div><p>Todo al día — sin envíos demorados ni pagos pendientes</p></div>';
+    return;
+  }
+
+  let html = '';
+
+  if (delayed.length) {
+    html += `<div style="font-family:'Syne',sans-serif;font-size:0.8rem;color:var(--orange);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.5rem">🚚 En tránsito hace ${ALERT_TRANSIT_DAYS}+ días (${delayed.length})</div>`;
+    html += delayed.map(s => `
+      <div class="shipment-item ${s.status} clickable" onclick="showShipmentModal('${s.id}')" style="margin-bottom:0.5rem">
+        <div class="si-header">
+          <div class="si-client">${s.client}</div>
+          <span class="badge badge-transit">${daysSince(s.addedDate)}d en tránsito</span>
+        </div>
+        <div class="si-meta">
+          <span>📋 ${s.order}</span>
+          ${s.city ? `<span>📍 ${s.city}</span>` : ''}
+        </div>
+      </div>`).join('');
+  }
+
+  if (pendingPay.length) {
+    html += `<div style="font-family:'Syne',sans-serif;font-size:0.8rem;color:var(--blue);text-transform:uppercase;letter-spacing:1px;margin:${delayed.length ? '1rem' : '0'} 0 0.5rem">💰 Pago pendiente — 50% Adelanto (${pendingPay.length})</div>`;
+    html += pendingPay.map(s => `
+      <div class="shipment-item ${s.status} clickable" onclick="showShipmentModal('${s.id}')" style="margin-bottom:0.5rem">
+        <div class="si-header">
+          <div class="si-client">${s.client}</div>
+          <span class="badge badge-pending">${daysSince(s.addedDate)}d pendiente</span>
+        </div>
+        <div class="si-meta">
+          <span>📋 ${s.order}</span>
+          <span>${s.status === 'delivered' ? '✅ Ya llegó — falta cobrar' : '🚚 Aún en tránsito'}</span>
+        </div>
+      </div>`).join('');
+  }
+
+  el.innerHTML = html;
+}
+
+// ═══════════════════════════════════
 //  DASHBOARD
 // ═══════════════════════════════════
 function renderDashboard() {
@@ -967,10 +1019,12 @@ function renderDashboard() {
   document.getElementById('d-delivered').textContent = shipments.filter(s => s.status === 'delivered').length;
   document.getElementById('d-clients').textContent   = uniqueClients().length;
   document.getElementById('d-mes-envios').textContent = mes.length;
-  document.getElementById('d-mes-costo').textContent  = 'S/' + mes.reduce((a,s) => a+s.cost, 0).toFixed(0);
+  document.getElementById('d-mes-valor').textContent  = 'S/' + mes.reduce((a,s) => a+s.value, 0).toFixed(0);
 
   const lbl = document.getElementById('dash-mes-label');
   if (lbl) lbl.textContent = now.toLocaleString('es-PE', { month:'long', year:'numeric' });
+
+  renderAlerts();
 
   const el = document.getElementById('dash-recent');
   if (!mes.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>Sin envíos este mes</p></div>'; return; }
@@ -1025,7 +1079,6 @@ function renderShipments() {
         ${s.product ? `<span>🛍️ ${s.product}</span>` : ''}
       </div>
       <div class="si-meta">
-        ${s.cost  ? `<span>💰 S/${s.cost.toFixed(2)}</span>` : ''}
         ${s.value ? `<span>🛒 S/${s.value.toFixed(2)}</span>` : ''}
         <span>📅 ${fmtDate(s.addedDate)}</span>
         ${s.deliveredDate ? `<span>✅ ${fmtDate(s.deliveredDate)}</span>` : ''}
@@ -1089,7 +1142,6 @@ function searchClients(q) { renderClients(q); }
 function showClientModal(client) {
   const cs = shipments.filter(s => s.client === client);
   const delivered = cs.filter(s => s.status === 'delivered');
-  const totalCost = cs.reduce((a,s) => a+s.cost, 0);
   const totalValue = cs.reduce((a,s) => a+s.value, 0);
   const phone = cs.find(s => s.phone)?.phone || '';
   const avgDays = avgDeliveryDays(cs);
@@ -1101,8 +1153,7 @@ function showClientModal(client) {
       <div class="client-stat"><div class="client-stat-val">${delivered.length}</div><div class="client-stat-lbl">Entregados</div></div>
       <div class="client-stat"><div class="client-stat-val">${avgDays > 0 ? avgDays+'d' : '-'}</div><div class="client-stat-lbl">Prom. entrega</div></div>
     </div>
-    <div class="grid-3" style="margin-bottom:1rem">
-      <div class="client-stat"><div class="client-stat-val">S/${totalCost.toFixed(0)}</div><div class="client-stat-lbl">Costo envíos</div></div>
+    <div class="grid-2" style="margin-bottom:1rem">
       <div class="client-stat"><div class="client-stat-val">S/${totalValue.toFixed(0)}</div><div class="client-stat-lbl">Valor pedidos</div></div>
       <div class="client-stat"><div class="client-stat-val">${phone || '-'}</div><div class="client-stat-lbl">Celular</div></div>
     </div>
@@ -1132,9 +1183,9 @@ function renderCities() {
   const cities = {};
   shipments.forEach(s => {
     if (!s.city) return;
-    if (!cities[s.city]) cities[s.city] = { total:0, costs:[], days:[] };
+    if (!cities[s.city]) cities[s.city] = { total:0, values:[], days:[] };
     cities[s.city].total++;
-    if (s.cost) cities[s.city].costs.push(s.cost);
+    if (s.value) cities[s.city].values.push(s.value);
     if (s.deliveredDate) {
       const d = (new Date(s.deliveredDate) - new Date(s.addedDate)) / 86400000;
       if (d >= 0) cities[s.city].days.push(d);
@@ -1148,7 +1199,7 @@ function renderCities() {
   if (!sorted.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🗺️</div><p>Agrega envíos con ciudad para ver estadísticas</p></div>'; return; }
 
   el.innerHTML = sorted.map(([city, data]) => {
-    const avgCost = data.costs.length ? (data.costs.reduce((a,b)=>a+b,0)/data.costs.length).toFixed(2) : '-';
+    const avgValue = data.values.length ? (data.values.reduce((a,b)=>a+b,0)/data.values.length).toFixed(2) : '-';
     const avgDay  = data.days.length  ? Math.round(data.days.reduce((a,b)=>a+b,0)/data.days.length) : '-';
     const pct     = (data.total / maxTotal * 100).toFixed(0);
     return `
@@ -1158,7 +1209,7 @@ function renderCities() {
         <div class="city-stats-vals">
           <div class="city-val"><div class="city-val-num">${data.total}</div><div class="city-val-lbl">envíos</div></div>
           <div class="city-val"><div class="city-val-num">${avgDay!=='-' ? avgDay+'d' : '-'}</div><div class="city-val-lbl">prom. días</div></div>
-          <div class="city-val"><div class="city-val-num">${avgCost!=='-' ? 'S/'+avgCost : '-'}</div><div class="city-val-lbl">prom. costo</div></div>
+          <div class="city-val"><div class="city-val-num">${avgValue!=='-' ? 'S/'+avgValue : '-'}</div><div class="city-val-lbl">prom. valor</div></div>
         </div>
       </div>`;
   }).join('');
@@ -1191,7 +1242,6 @@ function renderReports() {
   const mes = shipments.filter(s => { const d=new Date(s.addedDate); return d.getMonth()+1===m && d.getFullYear()===y; });
 
   document.getElementById('r-total').textContent   = mes.length;
-  document.getElementById('r-costo').textContent   = 'S/'+mes.reduce((a,s)=>a+s.cost,0).toFixed(0);
   document.getElementById('r-valor').textContent   = 'S/'+mes.reduce((a,s)=>a+s.value,0).toFixed(0);
   document.getElementById('r-clientes').textContent = [...new Set(mes.map(s=>s.client))].length;
 
@@ -1265,22 +1315,22 @@ function renderHistory() {
       groups[key].push(s);
     });
     el.innerHTML = Object.entries(groups).map(([month, items]) => {
-      const tc = items.reduce((a,s)=>a+s.cost,0);
+      const tv = items.reduce((a,s)=>a+s.value,0);
       const td = items.filter(s=>s.status==='delivered').length;
       return `
         <div style="font-family:'Syne',sans-serif;font-size:0.8rem;color:var(--gray);text-transform:uppercase;letter-spacing:1px;padding:0.75rem 0 0.25rem">
-          ${month} · ${items.length} envíos · ${td} entregados${tc>0?' · S/'+tc.toFixed(0)+' en envíos':''}
+          ${month} · ${items.length} envíos · ${td} entregados${tv>0?' · S/'+tv.toFixed(0)+' en pedidos':''}
         </div>
         ${items.map(s => histItem(s)).join('')}`;
     }).join('');
   } else {
-    const tc = list.reduce((a,s)=>a+s.cost,0);
+    const tv = list.reduce((a,s)=>a+s.value,0);
     const td = list.filter(s=>s.status==='delivered').length;
     el.innerHTML = `
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1rem">
         <div class="client-stat"><div class="client-stat-val">${list.length}</div><div class="client-stat-lbl">Envíos</div></div>
         <div class="client-stat"><div class="client-stat-val">${td}</div><div class="client-stat-lbl">Entregados</div></div>
-        <div class="client-stat"><div class="client-stat-val">S/${tc.toFixed(0)}</div><div class="client-stat-lbl">Costo envíos</div></div>
+        <div class="client-stat"><div class="client-stat-val">S/${tv.toFixed(0)}</div><div class="client-stat-lbl">Valor pedidos</div></div>
       </div>
       ${list.map(s => histItem(s)).join('')}`;
   }
@@ -1300,7 +1350,7 @@ function histItem(s) {
         ${s.pin ? `<span>🔐 ${s.pin}</span>` : ''}
         ${s.city ? `<span>📍 ${s.city}</span>` : ''}
         ${s.product ? `<span>🛍️ ${s.product}</span>` : ''}
-        ${s.cost ? `<span>💰 S/${s.cost.toFixed(2)}</span>` : ''}
+        ${s.value ? `<span>🛒 S/${s.value.toFixed(2)}</span>` : ''}
       </div>
       <div class="si-meta">
         <span>📅 ${fmtDate(s.addedDate)}</span>
