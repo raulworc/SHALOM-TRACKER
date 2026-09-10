@@ -349,9 +349,14 @@ textarea { resize:vertical; min-height:100px; }
         <button class="btn btn-primary" id="btn-add" onclick="addShipment()">📦 Registrar Envío</button>
       </div>
       <div class="card" style="margin-top:1rem">
-        <div class="section-title">📱 Mensaje WhatsApp para el cliente</div>
+        <div class="section-title">📦 Mensaje WhatsApp — En Tránsito</div>
         <div class="wa-box" id="wa-preview">Completa los datos para ver el mensaje...</div>
-        <button class="btn btn-green btn-sm" style="margin-top:0.75rem;width:100%" onclick="copyWA()">📋 Copiar mensaje</button>
+        <button class="btn btn-orange btn-sm" style="margin-top:0.75rem;width:100%" onclick="copyWA()">📋 Copiar mensaje</button>
+      </div>
+      <div class="card" style="margin-top:1rem">
+        <div class="section-title" id="wa-preview-delivered-title">✅ Mensaje WhatsApp — Entregado</div>
+        <div class="wa-box" id="wa-preview-delivered">Completa los datos para ver el mensaje...</div>
+        <button class="btn btn-green btn-sm" id="btn-copy-wa-delivered" style="margin-top:0.75rem;width:100%" onclick="copyWADelivered()">📋 Copiar mensaje</button>
       </div>
     </div>
   </div>
@@ -1331,18 +1336,49 @@ function updateWAPreview() {
     product: '',
     paymentStatus: currentPaymentStatus
   };
-  const el = document.getElementById('wa-preview');
-  if (!el) return;
-  // Mientras no se haya escrito nada relevante, mostrar el texto de ayuda
-  if (!s.client && !s.order && !s.code) {
-    el.textContent = 'Completa los datos para ver el mensaje...';
-    return;
+  const hasData = s.client || s.order || s.code;
+  const placeholder = 'Completa los datos para ver el mensaje...';
+
+  const elTransit = document.getElementById('wa-preview');
+  if (elTransit) {
+    elTransit.textContent = hasData ? buildMsg(getMsgTransit(), s) : placeholder;
   }
-  el.textContent = buildMsg(getMsgTransit(), s);
+
+  const elDelivered = document.getElementById('wa-preview-delivered');
+  if (elDelivered) {
+    const tpl = s.paymentStatus === 'partial' ? getMsgDeliveredPartial() : getMsgDelivered();
+    elDelivered.textContent = hasData ? buildMsg(tpl, s) : placeholder;
+  }
+
+  const titleDelivered = document.getElementById('wa-preview-delivered-title');
+  if (titleDelivered) {
+    titleDelivered.textContent = s.paymentStatus === 'partial'
+      ? '🔸 Mensaje WhatsApp — Entregado (Falta pago)'
+      : '✅ Mensaje WhatsApp — Entregado';
+  }
+
+  const btnDelivered = document.getElementById('btn-copy-wa-delivered');
+  if (btnDelivered) {
+    btnDelivered.className = s.paymentStatus === 'partial' ? 'btn btn-sm' : 'btn btn-green btn-sm';
+    btnDelivered.style.marginTop = '0.75rem';
+    btnDelivered.style.width = '100%';
+    if (s.paymentStatus === 'partial') {
+      btnDelivered.style.background = 'var(--blue)';
+      btnDelivered.style.color = 'white';
+    } else {
+      btnDelivered.style.background = '';
+      btnDelivered.style.color = '';
+    }
+  }
 }
 
 function copyWA() {
   const msg = document.getElementById('wa-preview').textContent;
+  navigator.clipboard.writeText(msg).then(() => showToast('📋 Mensaje copiado', 'success'));
+}
+
+function copyWADelivered() {
+  const msg = document.getElementById('wa-preview-delivered').textContent;
   navigator.clipboard.writeText(msg).then(() => showToast('📋 Mensaje copiado', 'success'));
 }
 
