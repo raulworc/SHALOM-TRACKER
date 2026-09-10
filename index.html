@@ -1332,7 +1332,13 @@ function updateWAPreview() {
     paymentStatus: currentPaymentStatus
   };
   const el = document.getElementById('wa-preview');
-  if (el) el.textContent = buildMsg(getMsgTransit(), s);
+  if (!el) return;
+  // Mientras no se haya escrito nada relevante, mostrar el texto de ayuda
+  if (!s.client && !s.order && !s.code) {
+    el.textContent = 'Completa los datos para ver el mensaje...';
+    return;
+  }
+  el.textContent = buildMsg(getMsgTransit(), s);
 }
 
 function copyWA() {
