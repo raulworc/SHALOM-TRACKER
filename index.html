@@ -318,10 +318,16 @@ textarea { resize:vertical; min-height:100px; }
             <input type="text" id="f-code" placeholder="Ej: C7P9">
           </div>
         </div>
-        <div class="form-group">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Clave de Recojo *</label>
+            <input type="text" id="f-pin" placeholder="Ej: 1971" maxlength="4" inputmode="numeric" pattern="[0-9]{4}">
+          </div>
+          <div class="form-group">
             <label>Ciudad destino</label>
             <input type="text" id="f-city" placeholder="Ej: Arequipa">
           </div>
+        </div>
         <div class="form-row">
           <div class="form-group">
             <label>Costo del envío (S/)</label>
@@ -330,6 +336,13 @@ textarea { resize:vertical; min-height:100px; }
           <div class="form-group">
             <label>Valor del pedido (S/)</label>
             <input type="number" id="f-value" placeholder="0.00" step="0.50" min="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Estado de Pago *</label>
+          <div class="tabs" id="payment-tabs" style="margin-bottom:0">
+            <div class="tab active" onclick="setPaymentStatus('paid', this)">✅ Pagado</div>
+            <div class="tab" onclick="setPaymentStatus('partial', this)">🔸 50% Adelanto</div>
           </div>
         </div>
         <button class="btn btn-primary" id="btn-add" onclick="addShipment()">📦 Registrar Envío</button>
@@ -401,8 +414,11 @@ textarea { resize:vertical; min-height:100px; }
           <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{cliente}</code> → Nombre del cliente &nbsp;
           <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{orden}</code> → N° de orden &nbsp;
           <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{codigo}</code> → Código &nbsp;
+          <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{clave}</code> → Clave de recojo &nbsp;
           <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{ciudad}</code> → Ciudad &nbsp;
           <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{producto}</code> → Producto
+          <br><br>
+          Nota: si un envío está marcado como <strong>50% Adelanto</strong>, la línea con <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{clave}</code> se oculta automáticamente del mensaje.
         </p>
       </div>
 
@@ -495,6 +511,7 @@ let shipments = [];
 let currentFilter = 'all';
 let currentSearch = '';
 let historialMode = 'general';
+let currentPaymentStatus = 'paid';
 
 const DEFAULT_MSG_TRANSIT = `Hola 👋
 
@@ -504,7 +521,7 @@ Te informamos que tu pedido ya fue enviado a través de *Shalom*.
 • N° de Orden: *{orden}*
 • Código: *{codigo}*
 • Destino: *{ciudad}*
-• Clave de recojo: *1971*
+• Clave de recojo: *{clave}*
 
 🔍 *Rastrea tu pedido aquí:*
 https://shalom.com.pe/rastrea
@@ -520,7 +537,7 @@ const DEFAULT_MSG_DELIVERED = `Hola 👋
 📦 Tu pedido está disponible para su recojo en la agencia *Shalom* de *{ciudad}*.
 
 • N° de Orden: *{orden}*
-• Clave de recojo: *1971*
+• Clave de recojo: *{clave}*
 
 Agradecemos su preferencia. Esperamos atenderle nuevamente.`;
 
@@ -638,15 +655,45 @@ function showPage(id) {
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
 // ═══════════════════════════════════
+//  PAYMENT STATUS (Pagado / 50% Adelanto)
+// ═══════════════════════════════════
+function setPaymentStatus(status, el) {
+  currentPaymentStatus = status;
+  document.querySelectorAll('#payment-tabs .tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  updateWAPreview();
+}
+
+function resetPaymentStatus() {
+  currentPaymentStatus = 'paid';
+  const tabs = document.querySelectorAll('#payment-tabs .tab');
+  tabs.forEach((t,i) => t.classList.toggle('active', i === 0));
+}
+
+async function markAsPaid(id) {
+  try {
+    await col.doc(id).update({ paymentStatus: 'paid' });
+    showToast('💰 Marcado como Pagado', 'success');
+    if (document.getElementById('modal-shipment').classList.contains('show')) {
+      showShipmentModal(id);
+    }
+  } catch(e) {
+    showToast('❌ Error al actualizar', 'error');
+  }
+}
+
+// ═══════════════════════════════════
 //  ADD SHIPMENT
 // ═══════════════════════════════════
 async function addShipment() {
   const client  = document.getElementById('f-client').value.trim();
   const order   = document.getElementById('f-order').value.trim();
   const code    = document.getElementById('f-code').value.trim();
+  const pin     = document.getElementById('f-pin').value.trim();
 
-  if (!client || !order || !code) { showToast('⚠️ Cliente, N° Orden y Código son obligatorios', 'error'); return; }
-  
+  if (!client || !order || !code || !pin) { showToast('⚠️ Cliente, N° Orden, Código y Clave son obligatorios', 'error'); return; }
+  if (!/^\d{4}$/.test(pin)) { showToast('⚠️ La Clave de Recojo debe tener 4 dígitos', 'error'); return; }
+
   // Disable button to prevent duplicates
   const btnAdd = document.getElementById('btn-add');
   if (btnAdd) { btnAdd.disabled = true; btnAdd.textContent = 'Guardando...'; }
@@ -657,11 +704,13 @@ async function addShipment() {
     phone:   '',
     order,
     code,
+    pin,
     product: '',
     city:    document.getElementById('f-city').value.trim(),
     cost:    parseFloat(document.getElementById('f-cost').value) || 0,
     value:   parseFloat(document.getElementById('f-value').value) || 0,
     status:  'in-transit', // siempre en tránsito al agregar
+    paymentStatus: currentPaymentStatus,
     addedDate:     new Date().toISOString(),
     deliveredDate: null,
     lastChecked:   null
@@ -673,18 +722,21 @@ async function addShipment() {
       phone:   s.phone,
       order:   s.order,
       code:    s.code,
+      pin:     s.pin,
       product: s.product,
       city:    s.city,
       cost:    s.cost,
       value:   s.value,
       status:  s.status,
+      paymentStatus: s.paymentStatus,
       addedDate:     s.addedDate,
       deliveredDate: null,
       lastChecked:   null
     });
 
-    ['f-client','f-order','f-code','f-city','f-cost','f-value']
+    ['f-client','f-order','f-code','f-pin','f-city','f-cost','f-value']
       .forEach(id => document.getElementById(id).value = '');
+    resetPaymentStatus();
 
     showToast('✅ Envío registrado — marcado como En Tránsito', 'success');
     updateWAPreview();
@@ -745,8 +797,11 @@ function showEditModal(id) {
       <div class="form-group"><label>Código</label><input id="e-code" value="${s.code}"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Producto</label><input id="e-product" value="${s.product||''}"></div>
+      <div class="form-group"><label>Clave de Recojo</label><input id="e-pin" value="${s.pin||''}" maxlength="4" inputmode="numeric" pattern="[0-9]{4}"></div>
       <div class="form-group"><label>Ciudad</label><input id="e-city" value="${s.city||''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Producto</label><input id="e-product" value="${s.product||''}"></div>
     </div>
     <div class="form-row">
       <div class="form-group"><label>Costo envío (S/)</label><input type="number" id="e-cost" value="${s.cost||0}" step="0.5"></div>
@@ -764,16 +819,19 @@ async function saveEdit(id) {
   s.phone   = document.getElementById('e-phone').value.trim();
   s.order   = document.getElementById('e-order').value.trim();
   s.code    = document.getElementById('e-code').value.trim();
+  s.pin     = document.getElementById('e-pin').value.trim();
   s.product = document.getElementById('e-product').value.trim();
   s.city    = document.getElementById('e-city').value.trim();
   s.cost    = parseFloat(document.getElementById('e-cost').value) || 0;
   s.value   = parseFloat(document.getElementById('e-value').value) || 0;
+  if (s.pin && !/^\d{4}$/.test(s.pin)) { showToast('⚠️ La Clave de Recojo debe tener 4 dígitos', 'error'); return; }
   try {
     await col.doc(id).update({
       client:  document.getElementById('e-client').value.trim(),
       phone:   document.getElementById('e-phone').value.trim(),
       order:   document.getElementById('e-order').value.trim(),
       code:    document.getElementById('e-code').value.trim(),
+      pin:     s.pin,
       product: document.getElementById('e-product').value.trim(),
       city:    document.getElementById('e-city').value.trim(),
       cost:    parseFloat(document.getElementById('e-cost').value) || 0,
@@ -804,12 +862,15 @@ function showShipmentModal(id) {
       <div class="si-header">
         <div class="si-client" style="font-size:1.1rem">${s.client}</div>
         <span class="badge badge-${s.status === 'in-transit' ? 'transit' : s.status}">${statusLabel(s.status)}</span>
+        <span class="badge ${s.paymentStatus === 'partial' ? 'badge-pending' : 'badge-delivered'}">${s.paymentStatus === 'partial' ? '🔸 50% Adelanto' : '✅ Pagado'}</span>
       </div>
       <div class="si-meta" style="font-size:0.85rem">
         <span>📋 <strong>${s.order}</strong></span>
         <span>🔑 <strong>${s.code}</strong></span>
+        ${s.pin ? `<span>🔐 <strong>${s.pin}</strong></span>` : ''}
         <button class="btn btn-sm" style="background:var(--navy);border:1px solid var(--border);color:var(--gold);padding:0.3rem 0.7rem;font-size:0.7rem" onclick="copyText('${s.order}');showToast('📋 N° Orden copiado','success')">📋 Copiar Orden</button>
         <button class="btn btn-sm" style="background:var(--navy);border:1px solid var(--border);color:var(--gold);padding:0.3rem 0.7rem;font-size:0.7rem" onclick="copyText('${s.code}');showToast('📋 Código copiado','success')">📋 Copiar Código</button>
+        ${s.pin ? `<button class="btn btn-sm" style="background:var(--navy);border:1px solid var(--border);color:var(--gold);padding:0.3rem 0.7rem;font-size:0.7rem" onclick="copyText('${s.pin}');showToast('📋 Clave copiada','success')">📋 Copiar Clave</button>` : ''}
         ${s.city ? `<span>📍 ${s.city}</span>` : ''}
         ${s.phone ? `<span>📱 ${s.phone}</span>` : ''}
       </div>
@@ -831,6 +892,7 @@ function showShipmentModal(id) {
       ` : `
         <button class="btn btn-sm btn-orange" onclick="setStatus('${s.id}','in-transit')">↩️ Volver a Tránsito</button>
       `}
+      ${s.paymentStatus === 'partial' ? `<button class="btn btn-sm" style="background:var(--green);color:white" onclick="markAsPaid('${s.id}')">💰 Marcar como Pagado</button>` : ''}
       <button class="btn btn-sm btn-ghost" onclick="showEditModal('${s.id}')">✏️ Editar</button>
       <button class="btn btn-sm" style="background:var(--red-light);color:var(--red)" onclick="deleteShipment('${s.id}')">🗑️ Eliminar</button>
     </div>
@@ -901,6 +963,7 @@ function renderShipments() {
       s.client.toLowerCase().includes(q) ||
       s.order.includes(q) ||
       s.code.toLowerCase().includes(q) ||
+      (s.pin && s.pin.includes(q)) ||
       (s.city && s.city.toLowerCase().includes(q))
     );
   }
@@ -913,10 +976,12 @@ function renderShipments() {
       <div class="si-header">
         <div class="si-client" style="cursor:pointer" onclick="showShipmentModal('${s.id}')">${s.client} ${s.phone ? `· ${s.phone}` : ''}</div>
         <span class="badge badge-${s.status === 'in-transit' ? 'transit' : s.status}">${statusLabel(s.status)}</span>
+        <span class="badge ${s.paymentStatus === 'partial' ? 'badge-pending' : 'badge-delivered'}">${s.paymentStatus === 'partial' ? '🔸 50%' : '✅ Pagado'}</span>
       </div>
       <div class="si-meta">
         <span>📋 ${s.order}</span>
         <span>🔑 ${s.code}</span>
+        ${s.pin ? `<span>🔐 ${s.pin}</span>` : ''}
         ${s.city ? `<span>📍 ${s.city}</span>` : ''}
         ${s.product ? `<span>🛍️ ${s.product}</span>` : ''}
       </div>
@@ -933,6 +998,7 @@ function renderShipments() {
         ` : `
           <button class="btn btn-sm btn-orange" onclick="setStatus('${s.id}','in-transit')">↩️ Tránsito</button>
         `}
+        ${s.paymentStatus === 'partial' ? `<button class="btn btn-sm" style="background:var(--green);color:white" onclick="markAsPaid('${s.id}')">💰 Marcar Pagado</button>` : ''}
         <button class="btn btn-sm btn-ghost" onclick="showEditModal('${s.id}')">✏️</button>
         ${s.phone ? `<button class="btn btn-sm" style="background:#25d366;color:white" onclick="showShipmentModal('${s.id}')">📱 WA</button>` : ''}
         <button class="btn btn-sm" style="background:var(--red-light);color:var(--red)" onclick="deleteShipment('${s.id}')">🗑️</button>
@@ -1187,10 +1253,12 @@ function histItem(s) {
       <div class="si-header">
         <div class="si-client">${s.client}</div>
         <span class="badge badge-${s.status==='in-transit'?'transit':s.status}">${statusLabel(s.status)}</span>
+        <span class="badge ${s.paymentStatus === 'partial' ? 'badge-pending' : 'badge-delivered'}">${s.paymentStatus === 'partial' ? '🔸 50%' : '✅ Pagado'}</span>
       </div>
       <div class="si-meta">
         <span>📋 ${s.order}</span>
         <span>🔑 ${s.code}</span>
+        ${s.pin ? `<span>🔐 ${s.pin}</span>` : ''}
         ${s.city ? `<span>📍 ${s.city}</span>` : ''}
         ${s.product ? `<span>🛍️ ${s.product}</span>` : ''}
         ${s.cost ? `<span>💰 S/${s.cost.toFixed(2)}</span>` : ''}
@@ -1206,10 +1274,16 @@ function histItem(s) {
 //  WHATSAPP & MENSAJES
 // ═══════════════════════════════════
 function buildMsg(template, s) {
-  return template
+  let tpl = template;
+  // Si el envío está al 50% de adelanto, no se muestra la clave de recojo
+  if (s.paymentStatus === 'partial') {
+    tpl = tpl.split('\n').filter(line => !line.includes('{clave}')).join('\n');
+  }
+  return tpl
     .replace(/{cliente}/g, s.client || '')
     .replace(/{orden}/g,   s.order  || '')
     .replace(/{codigo}/g,  s.code   || '')
+    .replace(/{clave}/g,   s.pin    || '')
     .replace(/{ciudad}/g,  s.city   || '')
     .replace(/{producto}/g,s.product|| '');
 }
@@ -1219,8 +1293,10 @@ function updateWAPreview() {
     client:  document.getElementById('f-client')?.value  || '',
     order:   document.getElementById('f-order')?.value   || '',
     code:    document.getElementById('f-code')?.value    || '',
+    pin:     document.getElementById('f-pin')?.value     || '',
     city:    document.getElementById('f-city')?.value    || '',
-    product: ''
+    product: '',
+    paymentStatus: currentPaymentStatus
   };
   const el = document.getElementById('wa-preview');
   if (el) el.textContent = buildMsg(getMsgTransit(), s);
@@ -1239,7 +1315,7 @@ function sendWA(phone, msg) {
   window.open(`https://wa.me/51${phone}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-['f-client','f-order','f-code','f-city'].forEach(id => {
+['f-client','f-order','f-code','f-pin','f-city'].forEach(id => {
   setTimeout(() => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', updateWAPreview);
