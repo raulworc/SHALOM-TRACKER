@@ -552,23 +552,17 @@ const DEFAULT_MSG_DELIVERED = `Hola 👋
 📦 Tu pedido está disponible para su recojo en la agencia *Shalom* de *{ciudad}*.
 
 • N° de Orden: *{orden}*
-• Clave de recojo: *{clave}*
+• *Clave de recojo: {clave}*
 
 Agradecemos su preferencia. Esperamos atenderle nuevamente.`;
 
 const DEFAULT_MSG_DELIVERED_PARTIAL = `Hola 👋
 
-¡Tu pedido ya llegó a destino! ✅
+Tu pedido *{orden}* ya está listo en *Shalom* *{ciudad}* ✅
 
-📦 Tu pedido está disponible en la agencia *Shalom* de *{ciudad}*, pendiente de recojo.
+Recuerda que queda pendiente el *50% del pago* — apenas lo hagas te paso la *clave de recojo* 🔑
 
-• N° de Orden: *{orden}*
-
-💳 Para poder entregarte la clave de recojo, nos falta que completes el pago restante del pedido.
-
-Apenas confirmes el pago, te enviamos la clave para que puedas recogerlo 🙌
-
-¡Cualquier consulta, escríbenos! 😊`;
+¡Gracias!`;
 
 // ═══════════════════════════════════
 //  FIREBASE (compat SDK - funciona con onclick)
@@ -1463,3 +1457,4 @@ window.addEventListener('load', () => {
 </script>
 </body>
 </html>
+
