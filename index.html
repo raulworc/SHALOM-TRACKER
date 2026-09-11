@@ -490,15 +490,19 @@ textarea { resize:vertical; min-height:100px; }
         </div>
         <div style="font-size:0.75rem;color:var(--gray);margin-top:0.5rem">Tamaño seleccionado: <strong id="label-size-current-name" style="color:var(--gold)">Mediano</strong></div>
       </div>
+      <div id="lbl-editing-banner" style="display:none;align-items:center;justify-content:space-between;gap:0.5rem;background:rgba(233,196,106,0.12);border:1px solid var(--gold);border-radius:8px;padding:0.5rem 0.75rem;margin-bottom:0.75rem;font-size:0.8rem">
+        <span>✏️ Editando cliente guardado — corrige los datos y dale a "Guardar Cambios"</span>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="cancelEditSavedClient()">✖️ Cancelar</button>
+      </div>
       <div style="display:flex;gap:0.5rem">
-        <button class="btn btn-ghost" onclick="saveClientFromForm()" style="flex:1">💾 Guardar Cliente</button>
+        <button class="btn btn-green" id="btn-save-client" onclick="saveClientFromForm()" style="flex:1">💾 Guardar Cliente</button>
         <button class="btn btn-primary" onclick="generateLabelFromForm()" style="flex:2">🖨️ Generar e Imprimir</button>
       </div>
-      <p style="font-size:0.75rem;color:var(--gray);margin-top:0.6rem">"Guardar Cliente" no es automático — revisa el nombre y el DNI antes de guardar para evitar errores. Una vez guardado, el cliente aparece abajo para reimprimir su etiqueta con un solo click.</p>
+      <p style="font-size:0.75rem;color:var(--gray);margin-top:0.6rem">"Guardar Cliente" no es automático — revisa el nombre y el DNI antes de guardar para evitar errores. Una vez guardado, el cliente aparece abajo para reimprimir su etiqueta con un solo click, o para editarlo/borrarlo si hubo un error.</p>
     </div>
     <div class="card" style="margin-top:1rem">
       <div class="section-title">📇 Clientes Guardados</div>
-      <p style="font-size:0.8rem;color:var(--gray);margin-bottom:1rem">Con un click genera e imprime la etiqueta de ese cliente usando los datos que guardaste. Solo aparecen aquí los clientes que guardaste explícitamente con el botón "Guardar Cliente".</p>
+      <p style="font-size:0.8rem;color:var(--gray);margin-bottom:1rem">Con un click genera e imprime la etiqueta de ese cliente usando los datos que guardaste. Solo aparecen aquí los clientes que guardaste explícitamente con el botón "Guardar Cliente". Usa ✏️ para corregir datos o 🗑️ para borrar un cliente guardado por error.</p>
       <div class="search-wrap" style="margin-bottom:1rem">
         <span class="search-icon">🔍</span>
         <input type="text" id="saved-clients-search" placeholder="Buscar cliente guardado..." oninput="renderSavedClients(this.value)">
@@ -667,6 +671,7 @@ let currentPaymentStatus = 'paid';
 let clientAliases = {};
 let clientLabelData = {};
 let selectedLabelSize = 'mediano'; // chico | mediano | grande
+let editingClientKey = null; // clave (normalizada) del cliente guardado que se está editando, o null
 
 const DEFAULT_MSG_TRANSIT = `Hola *{cliente}* 👋
 
@@ -1485,8 +1490,9 @@ function generateLabelFromForm() {
   printLabel(nombre, dni, region);
 }
 
-// Botón "Guardar Cliente": guarda explícitamente los datos del formulario para que el cliente
-// aparezca en "Clientes Guardados" y se pueda reimprimir su etiqueta con un click la próxima vez.
+// Botón "Guardar Cliente" / "Guardar Cambios": guarda explícitamente los datos del formulario
+// para que el cliente aparezca en "Clientes Guardados". Si se estaba editando un cliente que ya
+// existía y se le cambió el nombre, se borra la entrada vieja para no dejarla duplicada.
 async function saveClientFromForm() {
   const nombre = document.getElementById('lbl-nombre').value.trim();
   const dni    = document.getElementById('lbl-dni').value.trim();
@@ -1495,8 +1501,59 @@ async function saveClientFromForm() {
     showToast('⚠️ Completa nombre, DNI y ciudad-región antes de guardar', 'error');
     return;
   }
+  const newKey = normalizeText(nombre);
+  if (editingClientKey && editingClientKey !== newKey) {
+    const updated = { ...clientLabelData };
+    delete updated[editingClientKey];
+    clientLabelData = updated;
+  }
+  const wasEditing = !!editingClientKey;
+  editingClientKey = null;
+  document.getElementById('lbl-editing-banner').style.display = 'none';
+  document.getElementById('btn-save-client').textContent = '💾 Guardar Cliente';
   await saveClientLabelData(nombre, dni, region);
-  showToast(`✅ Cliente "${nombre}" guardado`, 'success');
+  showToast(wasEditing ? `✅ Cliente "${nombre}" actualizado` : `✅ Cliente "${nombre}" guardado`, 'success');
+  renderSavedClients(document.getElementById('saved-clients-search')?.value || '');
+}
+
+// Carga los datos de un cliente guardado en el formulario para corregirlos (botón ✏️)
+function editSavedClient(key) {
+  const saved = clientLabelData[key];
+  if (!saved) return;
+  document.getElementById('lbl-nombre').value = saved.name || '';
+  document.getElementById('lbl-dni').value    = saved.dni  || '';
+  document.getElementById('lbl-region').value = saved.region || '';
+  editingClientKey = key;
+  document.getElementById('lbl-editing-banner').style.display = 'flex';
+  document.getElementById('btn-save-client').textContent = '💾 Guardar Cambios';
+  document.getElementById('page-etiquetas').scrollIntoView({ behavior:'smooth', block:'start' });
+  document.getElementById('lbl-nombre').focus();
+}
+
+// Cancela la edición en curso y limpia el formulario, sin borrar nada guardado
+function cancelEditSavedClient() {
+  editingClientKey = null;
+  document.getElementById('lbl-editing-banner').style.display = 'none';
+  document.getElementById('btn-save-client').textContent = '💾 Guardar Cliente';
+  document.getElementById('lbl-nombre').value = '';
+  document.getElementById('lbl-dni').value = '';
+  document.getElementById('lbl-region').value = '';
+}
+
+// Borra un cliente guardado por error (botón 🗑️), con confirmación previa
+async function confirmDeleteSavedClient(key, displayName) {
+  if (!confirm(`¿Borrar a "${displayName}" de los clientes guardados? Esto no afecta sus envíos ya registrados.`)) return;
+  const updated = { ...clientLabelData };
+  delete updated[key];
+  clientLabelData = updated;
+  if (editingClientKey === key) cancelEditSavedClient();
+  try {
+    await metaCol.doc('clientLabelData').set({ map: updated }, { merge: false });
+    showToast('🗑️ Cliente eliminado de la lista', 'success');
+  } catch (e) {
+    showToast('❌ Error al eliminar. Verifica conexión.', 'error');
+    console.error(e);
+  }
   renderSavedClients(document.getElementById('saved-clients-search')?.value || '');
 }
 
@@ -1524,10 +1581,10 @@ function renderSavedClients(q = '') {
   const el = document.getElementById('label-frequent-list');
   if (!el) return;
   const ql = q.trim().toLowerCase();
-  const clients = Object.values(clientLabelData)
-    .filter(c => c && c.name)
-    .filter(c => !ql || c.name.toLowerCase().includes(ql))
-    .sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
+  const clients = Object.entries(clientLabelData)
+    .filter(([key, c]) => c && c.name)
+    .filter(([key, c]) => !ql || c.name.toLowerCase().includes(ql))
+    .sort((a, b) => a[1].name.localeCompare(b[1].name, 'es', { sensitivity: 'base' }));
 
   if (!clients.length) {
     el.innerHTML = ql
@@ -1536,21 +1593,27 @@ function renderSavedClients(q = '') {
     return;
   }
 
-  el.innerHTML = clients.map(saved => {
+  el.innerHTML = clients.map(([key, saved]) => {
     const c = saved.name;
     const hasData = saved.dni && saved.region;
+    const keyEsc = key.replace(/'/g,"\\'");
+    const nameEsc = c.replace(/'/g,"\\'");
     return `
-      <div class="client-card" style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;flex-wrap:wrap">
+      <div class="client-card" style="display:flex;flex-direction:column;gap:0.6rem">
         <div>
           <div class="client-name">👤 ${clientDisplay(c)}</div>
           <div style="font-size:0.75rem;color:var(--gray);margin-top:0.15rem">
             ${hasData ? `🆔 ${saved.dni} · 📍 ${saved.region}` : 'Faltan datos por completar'}
           </div>
         </div>
-        ${hasData
-          ? `<button class="btn btn-primary btn-sm" onclick="quickPrintLabel('${c.replace(/'/g,"\\'")}')">🖨️ Imprimir</button>`
-          : `<button class="btn btn-ghost btn-sm" onclick="fillLabelForm('${c.replace(/'/g,"\\'")}', '${mostRecentCityForClient(c).replace(/'/g,"\\'")}')">✏️ Completar datos</button>`
-        }
+        <div style="display:flex;gap:0.5rem">
+          ${hasData
+            ? `<button class="btn btn-primary btn-sm" style="flex:2" onclick="quickPrintLabel('${nameEsc}')">🖨️ Imprimir</button>`
+            : `<button class="btn btn-ghost btn-sm" style="flex:2" onclick="fillLabelForm('${nameEsc}', '${mostRecentCityForClient(c).replace(/'/g,"\\'")}')">✏️ Completar datos</button>`
+          }
+          <button class="btn btn-ghost btn-sm" style="flex:1" onclick="editSavedClient('${keyEsc}')">✏️ Editar</button>
+          <button class="btn btn-sm" style="flex:1;background:var(--red-light);color:var(--red)" onclick="confirmDeleteSavedClient('${keyEsc}', '${nameEsc}')">🗑️ Borrar</button>
+        </div>
       </div>`;
   }).join('');
 }
