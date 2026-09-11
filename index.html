@@ -490,11 +490,19 @@ textarea { resize:vertical; min-height:100px; }
         </div>
         <div style="font-size:0.75rem;color:var(--gray);margin-top:0.5rem">Tamaño seleccionado: <strong id="label-size-current-name" style="color:var(--gold)">Mediano</strong></div>
       </div>
-      <button class="btn btn-primary" onclick="generateLabelFromForm()" style="width:100%">🖨️ Generar e Imprimir</button>
+      <div style="display:flex;gap:0.5rem">
+        <button class="btn btn-ghost" onclick="saveClientFromForm()" style="flex:1">💾 Guardar Cliente</button>
+        <button class="btn btn-primary" onclick="generateLabelFromForm()" style="flex:2">🖨️ Generar e Imprimir</button>
+      </div>
+      <p style="font-size:0.75rem;color:var(--gray);margin-top:0.6rem">"Guardar Cliente" no es automático — revisa el nombre y el DNI antes de guardar para evitar errores. Una vez guardado, el cliente aparece abajo para reimprimir su etiqueta con un solo click.</p>
     </div>
     <div class="card" style="margin-top:1rem">
-      <div class="section-title">⭐ Clientes Frecuentes</div>
-      <p style="font-size:0.8rem;color:var(--gray);margin-bottom:1rem">Con un click genera la etiqueta usando sus datos guardados. Si es la primera vez con ese cliente, completa sus datos arriba una vez y se quedan guardados para la próxima.</p>
+      <div class="section-title">📇 Clientes Guardados</div>
+      <p style="font-size:0.8rem;color:var(--gray);margin-bottom:1rem">Con un click genera e imprime la etiqueta de ese cliente usando los datos que guardaste. Solo aparecen aquí los clientes que guardaste explícitamente con el botón "Guardar Cliente".</p>
+      <div class="search-wrap" style="margin-bottom:1rem">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="saved-clients-search" placeholder="Buscar cliente guardado..." oninput="renderSavedClients(this.value)">
+      </div>
       <div id="label-frequent-list"></div>
     </div>
   </div>
@@ -758,7 +766,7 @@ function startClientLabelDataSync() {
   metaCol.doc('clientLabelData').onSnapshot((doc) => {
     clientLabelData = (doc.exists && doc.data().map) || {};
     const activePage = document.querySelector('.page.active')?.id?.replace('page-','');
-    if (activePage === 'etiquetas') renderLabelFrequentClients();
+    if (activePage === 'etiquetas') renderSavedClients(document.getElementById('saved-clients-search')?.value || '');
   });
 }
 
@@ -839,7 +847,7 @@ function showPage(id) {
   if (id === 'envios')     renderShipments();
   if (id === 'clientes')   renderClients();
   if (id === 'ciudades')   renderCities();
-  if (id === 'etiquetas')  renderLabelFrequentClients();
+  if (id === 'etiquetas')  renderSavedClients();
   if (id === 'reportes')   renderReports();
   if (id === 'historial')  renderHistory();
   if (id === 'nuevo')      updateWAPreview();
@@ -1467,27 +1475,39 @@ function printLabel(nombre, dni, region) {
   setTimeout(() => window.print(), 50);
 }
 
-// Botón principal del formulario: guarda los datos y genera/imprime la etiqueta
-async function generateLabelFromForm() {
+// Botón "Generar e Imprimir": solo imprime con lo que hay en el formulario — YA NO guarda
+// nada automáticamente (eso ahora es responsabilidad exclusiva del botón "Guardar Cliente",
+// para no guardar por error un nombre o DNI mal escrito).
+function generateLabelFromForm() {
+  const nombre = document.getElementById('lbl-nombre').value.trim();
+  const dni    = document.getElementById('lbl-dni').value.trim();
+  const region = document.getElementById('lbl-region').value.trim();
+  printLabel(nombre, dni, region);
+}
+
+// Botón "Guardar Cliente": guarda explícitamente los datos del formulario para que el cliente
+// aparezca en "Clientes Guardados" y se pueda reimprimir su etiqueta con un click la próxima vez.
+async function saveClientFromForm() {
   const nombre = document.getElementById('lbl-nombre').value.trim();
   const dni    = document.getElementById('lbl-dni').value.trim();
   const region = document.getElementById('lbl-region').value.trim();
   if (!nombre || !dni || !region) {
-    showToast('⚠️ Completa nombre, DNI y ciudad-región', 'error');
+    showToast('⚠️ Completa nombre, DNI y ciudad-región antes de guardar', 'error');
     return;
   }
   await saveClientLabelData(nombre, dni, region);
-  printLabel(nombre, dni, region);
+  showToast(`✅ Cliente "${nombre}" guardado`, 'success');
+  renderSavedClients(document.getElementById('saved-clients-search')?.value || '');
 }
 
-// Un click desde "Clientes Frecuentes": usa los datos guardados o pide completarlos la primera vez
+// Un click desde "Clientes Guardados": usa los datos guardados o pide completarlos si faltan
 function quickPrintLabel(clientName) {
   const saved = clientLabelData[normalizeText(clientName)];
   if (saved && saved.dni && saved.region) {
     printLabel(saved.name || clientName, saved.dni, saved.region);
   } else {
     fillLabelForm(clientName, mostRecentCityForClient(clientName));
-    showToast('✏️ Completa los datos una vez y quedan guardados para la próxima', 'success');
+    showToast('✏️ Completa los datos y usa "Guardar Cliente"', 'success');
   }
 }
 
@@ -1498,26 +1518,33 @@ function mostRecentCityForClient(clientName) {
   return cs[0]?.city || '';
 }
 
-// Lista de clientes frecuentes en la página de Etiquetas, con botón de generación rápida
-function renderLabelFrequentClients() {
+// Lista de clientes que se guardaron explícitamente desde "Guardar Cliente", ordenados por
+// nombre, con botón de generación rápida — ya no depende de cuántos envíos tenga el cliente.
+function renderSavedClients(q = '') {
   const el = document.getElementById('label-frequent-list');
   if (!el) return;
-  const clients = uniqueClients().filter(c => shipments.filter(s => s.client === c).length >= FREQUENT_CLIENT_THRESHOLD);
+  const ql = q.trim().toLowerCase();
+  const clients = Object.values(clientLabelData)
+    .filter(c => c && c.name)
+    .filter(c => !ql || c.name.toLowerCase().includes(ql))
+    .sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
 
   if (!clients.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">⭐</div><p>Aún no hay clientes frecuentes (3+ envíos)</p></div>';
+    el.innerHTML = ql
+      ? '<div class="empty"><div class="empty-icon">🔍</div><p>No se encontró ningún cliente guardado con ese nombre</p></div>'
+      : '<div class="empty"><div class="empty-icon">📇</div><p>Aún no guardaste ningún cliente. Completa el formulario de arriba y dale a "Guardar Cliente".</p></div>';
     return;
   }
 
-  el.innerHTML = clients.map(c => {
-    const saved = clientLabelData[normalizeText(c)];
-    const hasData = saved && saved.dni && saved.region;
+  el.innerHTML = clients.map(saved => {
+    const c = saved.name;
+    const hasData = saved.dni && saved.region;
     return `
       <div class="client-card" style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;flex-wrap:wrap">
         <div>
           <div class="client-name">👤 ${clientDisplay(c)}</div>
           <div style="font-size:0.75rem;color:var(--gray);margin-top:0.15rem">
-            ${hasData ? `🆔 ${saved.dni} · 📍 ${saved.region}` : 'Sin datos guardados aún'}
+            ${hasData ? `🆔 ${saved.dni} · 📍 ${saved.region}` : 'Faltan datos por completar'}
           </div>
         </div>
         ${hasData
