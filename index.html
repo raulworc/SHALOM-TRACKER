@@ -230,34 +230,31 @@ textarea { resize:vertical; min-height:100px; }
   .fab { display:flex !important; }
 }
 
-/* ── ETIQUETA IMPRIMIBLE ── */
-@page { size: portrait; margin: 1.2cm; }
+/* ── ETIQUETA IMPRIMIBLE (formato horizontal, como la hoja que se pega al pedido) ── */
+@page { size: landscape; margin: 1.2cm; }
 #print-label-area { display:none; }
-.print-label-box { max-width:700px; }
-.print-label-logo { max-width:320px; margin-bottom:1.75rem; display:block; }
-.print-label-name { font-size:2.4rem; font-weight:800; color:#000; margin-bottom:0.6rem; line-height:1.15; text-transform:uppercase; }
-.print-label-dni { font-size:1.7rem; font-weight:700; color:#000; margin-bottom:0.9rem; }
-.print-label-region { font-size:1.4rem; color:#000; }
+.print-label-box { max-width:100%; text-align:left; }
+.print-label-logo { max-width:260px; margin-bottom:1.3rem; display:block; }
+.print-label-name { font-size:2.6rem; font-weight:800; color:#000; margin-bottom:0.7rem; line-height:1.15; text-transform:uppercase; }
+.print-label-dni { font-size:1.9rem; font-weight:700; color:#000; margin-bottom:1rem; }
+.print-label-region { font-size:1.6rem; color:#000; line-height:1.3; }
 
-/* Tamaño del pedido: controla cuánto ocupa la etiqueta en la hoja */
-.print-label-box.size-chico .print-label-logo   { max-width:190px; margin-bottom:1rem; }
-.print-label-box.size-chico .print-label-name   { font-size:1.5rem; margin-bottom:0.4rem; }
-.print-label-box.size-chico .print-label-dni    { font-size:1.15rem; margin-bottom:0.5rem; }
-.print-label-box.size-chico .print-label-region { font-size:1rem; }
+/* Tamaño del pedido: controla cuánto ocupa la etiqueta en la hoja horizontal */
+.print-label-box.size-chico .print-label-logo   { max-width:160px; margin-bottom:0.8rem; }
+.print-label-box.size-chico .print-label-name   { font-size:1.7rem; margin-bottom:0.4rem; }
+.print-label-box.size-chico .print-label-dni    { font-size:1.25rem; margin-bottom:0.55rem; }
+.print-label-box.size-chico .print-label-region { font-size:1.05rem; }
 
-.print-label-box.size-mediano .print-label-logo   { max-width:320px; margin-bottom:1.75rem; }
-.print-label-box.size-mediano .print-label-name   { font-size:2.4rem; margin-bottom:0.6rem; }
-.print-label-box.size-mediano .print-label-dni    { font-size:1.7rem; margin-bottom:0.9rem; }
-.print-label-box.size-mediano .print-label-region { font-size:1.4rem; }
+.print-label-box.size-mediano .print-label-logo   { max-width:260px; margin-bottom:1.3rem; }
+.print-label-box.size-mediano .print-label-name   { font-size:2.6rem; margin-bottom:0.7rem; }
+.print-label-box.size-mediano .print-label-dni    { font-size:1.9rem; margin-bottom:1rem; }
+.print-label-box.size-mediano .print-label-region { font-size:1.6rem; }
 
-.print-label-box.size-grande {
-  max-width:none; width:100%; min-height:88vh; align-items:center; text-align:center;
-  display:flex; flex-direction:column; justify-content:space-evenly;
-}
-.print-label-box.size-grande .print-label-logo   { max-width:520px; margin:0 auto; }
-.print-label-box.size-grande .print-label-name   { font-size:5.4rem; margin-bottom:0; }
-.print-label-box.size-grande .print-label-dni    { font-size:3.6rem; margin-bottom:0; }
-.print-label-box.size-grande .print-label-region { font-size:2.6rem; }
+.print-label-box.size-grande { max-width:100%; width:100%; }
+.print-label-box.size-grande .print-label-logo   { max-width:400px; margin-bottom:2.1rem; }
+.print-label-box.size-grande .print-label-name   { font-size:4.4rem; margin-bottom:1.1rem; }
+.print-label-box.size-grande .print-label-dni    { font-size:3.1rem; margin-bottom:1.4rem; }
+.print-label-box.size-grande .print-label-region { font-size:2.5rem; }
 
 .label-size-btn.active { background:var(--red); color:#fff; border-color:var(--red); }
 
@@ -265,11 +262,11 @@ textarea { resize:vertical; min-height:100px; }
   body > *:not(#print-label-area) { display:none !important; }
   #print-label-area {
     display:flex !important;
-    align-items:center;
-    justify-content:center;
+    align-items:flex-start;
+    justify-content:flex-start;
     min-height:100vh;
     width:100%;
-    padding:1.5cm;
+    padding:0.5cm 1.5cm;
     background:#fff;
   }
 }
@@ -1374,6 +1371,22 @@ function setLabelSize(size) {
   document.querySelectorAll('.label-size-btn').forEach(b => b.classList.toggle('active', b.dataset.size === size));
 }
 
+// Tamaño base (en rem) de la línea de dirección por cada tamaño de pedido — debe coincidir con el CSS .print-label-region
+const LABEL_REGION_BASE_REM = { chico: 1.05, mediano: 1.6, grande: 2.5 };
+
+// La dirección es el dato más variable en longitud: se achica proporcionalmente si es muy larga,
+// para que siempre quede congruente con el nombre y el DNI en vez de desbordar o verse desproporcionada.
+function regionFontSizeRem(size, text) {
+  const base = LABEL_REGION_BASE_REM[size] || LABEL_REGION_BASE_REM.mediano;
+  const len = (text || '').trim().length;
+  let scale = 1;
+  if (len > 55)      scale = 0.55;
+  else if (len > 42) scale = 0.66;
+  else if (len > 30) scale = 0.8;
+  else if (len > 20) scale = 0.9;
+  return (base * scale).toFixed(2) + 'rem';
+}
+
 // Pinta el contenido oculto de impresión y dispara el diálogo de impresión del navegador
 function printLabel(nombre, dni, region) {
   if (!nombre || !dni || !region) {
@@ -1383,7 +1396,9 @@ function printLabel(nombre, dni, region) {
   document.getElementById('print-label-box').className = 'print-label-box size-' + selectedLabelSize;
   document.getElementById('print-label-name').textContent   = nombre.toUpperCase();
   document.getElementById('print-label-dni').textContent    = 'DNI: ' + dni;
-  document.getElementById('print-label-region').textContent = region.toUpperCase();
+  const regionEl = document.getElementById('print-label-region');
+  regionEl.textContent = region.toUpperCase();
+  regionEl.style.fontSize = regionFontSizeRem(selectedLabelSize, region);
   setTimeout(() => window.print(), 50);
 }
 
