@@ -233,11 +233,11 @@ textarea { resize:vertical; min-height:100px; }
 /* ── ETIQUETA IMPRIMIBLE (formato horizontal, como la hoja que se pega al pedido) ── */
 @page { size: landscape; margin: 1.2cm; }
 #print-label-area { display:none; }
-.print-label-box { max-width:100%; text-align:left; }
+.print-label-box { max-width:100%; min-width:0; text-align:left; }
 .print-label-logo { width:260px; max-width:100%; height:auto; margin-bottom:1.3rem; display:block; }
-.print-label-name { font-size:2.6rem; font-weight:800; color:#000; margin-bottom:0.7rem; line-height:1.15; text-transform:uppercase; }
-.print-label-dni { font-size:1.9rem; font-weight:700; color:#000; margin-bottom:1rem; }
-.print-label-region { font-size:1.6rem; color:#000; line-height:1.3; }
+.print-label-name { font-size:2.6rem; font-weight:800; color:#000; margin-bottom:0.7rem; line-height:1.15; text-transform:uppercase; overflow-wrap:break-word; word-break:break-word; }
+.print-label-dni { font-size:1.9rem; font-weight:700; color:#000; margin-bottom:1rem; overflow-wrap:break-word; word-break:break-word; }
+.print-label-region { font-size:1.6rem; color:#000; line-height:1.3; overflow-wrap:break-word; word-break:break-word; }
 
 /* Tamaño del pedido: controla cuánto ocupa la etiqueta en la hoja horizontal
    (cada nivel sube de tamaño con respecto al anterior — logo incluido).
