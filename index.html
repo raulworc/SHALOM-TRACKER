@@ -563,7 +563,7 @@ textarea { resize:vertical; min-height:100px; }
           <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{adelanto}</code> → Cuánto adelantó el cliente &nbsp;
           <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{restante}</code> → Saldo pendiente (total − adelanto)
           <br><br>
-          Nota: si un envío está marcado como <strong>50% Adelanto</strong>, la línea con <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{clave}</code> se oculta automáticamente del mensaje.
+          Nota: si un envío está marcado como <strong>50% Adelanto</strong>, la línea con <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{clave}</code> se oculta automáticamente del mensaje. Si está <strong>Pagado</strong>, la línea con <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{restante}</code> se oculta automáticamente (no aplica).
         </p>
       </div>
 
@@ -690,6 +690,8 @@ Te informamos que tu pedido ya fue enviado a través de *Shalom*.
 • Código: *{codigo}*
 • Destino: *{ciudad}*
 • Clave de recojo: *{clave}*
+
+🔸 Saldo pendiente: *S/{restante}*
 
 🔍 *Rastrea tu pedido aquí:*
 https://shalom.com.pe/rastrea
@@ -1990,10 +1992,14 @@ function histItem(s) {
 // ═══════════════════════════════════
 function buildMsg(template, s) {
   let tpl = template;
-  // Si el envío está al 50% de adelanto, no se muestra la clave de recojo
+  // Si el envío está al 50% de adelanto, no se muestra la clave de recojo.
+  // Si ya está pagado, no aplica mostrar saldo pendiente.
   if (s.paymentStatus === 'partial') {
     tpl = tpl.split('\n').filter(line => !line.includes('{clave}')).join('\n');
+  } else {
+    tpl = tpl.split('\n').filter(line => !line.includes('{restante}')).join('\n');
   }
+  tpl = tpl.replace(/\n{3,}/g, '\n\n'); // limpia líneas en blanco extra que deja el filtro anterior
   const total    = parseFloat(s.value)   || 0;
   const adelanto = parseFloat(s.advance) || 0;
   const restante = Math.max(total - adelanto, 0);
