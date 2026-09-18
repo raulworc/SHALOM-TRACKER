@@ -417,7 +417,7 @@ textarea { resize:vertical; min-height:100px; }
         </div>
         <div class="form-group">
           <label>Valor del pedido (S/)</label>
-          <input type="number" id="f-value" placeholder="0.00" step="0.50" min="0">
+          <input type="number" id="f-value" placeholder="0.00" step="0.50" min="0" oninput="updateAdvanceHint()">
         </div>
         <div class="form-group">
           <label>Estado de Pago *</label>
@@ -425,6 +425,11 @@ textarea { resize:vertical; min-height:100px; }
             <div class="tab active" onclick="setPaymentStatus('paid', this)">✅ Pagado</div>
             <div class="tab" onclick="setPaymentStatus('partial', this)">🔸 50% Adelanto</div>
           </div>
+        </div>
+        <div class="form-group" id="f-advance-group" style="display:none">
+          <label>¿Cuánto adelantó el cliente? (S/)</label>
+          <input type="number" id="f-advance" placeholder="0.00" step="0.50" min="0" oninput="updateAdvanceHint()">
+          <div id="f-advance-hint" style="font-size:0.75rem;color:var(--gold);margin-top:0.4rem;font-weight:600"></div>
         </div>
         <button class="btn btn-primary" id="btn-add" onclick="addShipment()">📦 Registrar Envío</button>
       </div>
@@ -553,7 +558,10 @@ textarea { resize:vertical; min-height:100px; }
           <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{codigo}</code> → Código &nbsp;
           <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{clave}</code> → Clave de recojo &nbsp;
           <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{ciudad}</code> → Ciudad &nbsp;
-          <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{producto}</code> → Producto
+          <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{producto}</code> → Producto &nbsp;
+          <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{total}</code> → Valor total del pedido &nbsp;
+          <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{adelanto}</code> → Cuánto adelantó el cliente &nbsp;
+          <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{restante}</code> → Saldo pendiente (total − adelanto)
           <br><br>
           Nota: si un envío está marcado como <strong>50% Adelanto</strong>, la línea con <code style="background:var(--navy-light);padding:0.2rem 0.5rem;border-radius:4px;color:var(--gold)">{clave}</code> se oculta automáticamente del mensaje.
         </p>
@@ -705,9 +713,11 @@ const DEFAULT_MSG_DELIVERED_PARTIAL = `Hola *{cliente}* 👋
 
 Tu pedido *{orden}* ya está listo en *Shalom* *{ciudad}* ✅
 
-Recuerda que queda pendiente el *50% del pago* — apenas lo hagas te paso la *clave de recojo* 🔑
+🔸 Saldo pendiente: *S/{restante}*
 
-¡Gracias!`;
+Al confirmarse el pago, se envía la *clave de recojo* 🔑
+
+¡Gracias por tu preferencia!`;
 
 // ═══════════════════════════════════
 //  FIREBASE (compat SDK - funciona con onclick)
@@ -870,6 +880,9 @@ function setPaymentStatus(status, el) {
   currentPaymentStatus = status;
   document.querySelectorAll('#payment-tabs .tab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
+  const advGroup = document.getElementById('f-advance-group');
+  if (advGroup) advGroup.style.display = status === 'partial' ? 'block' : 'none';
+  updateAdvanceHint();
   updateWAPreview();
 }
 
@@ -877,6 +890,22 @@ function resetPaymentStatus() {
   currentPaymentStatus = 'paid';
   const tabs = document.querySelectorAll('#payment-tabs .tab');
   tabs.forEach((t,i) => t.classList.toggle('active', i === 0));
+  const advGroup = document.getElementById('f-advance-group');
+  if (advGroup) advGroup.style.display = 'none';
+  const hint = document.getElementById('f-advance-hint');
+  if (hint) hint.textContent = '';
+}
+
+// Muestra en vivo cuánto queda por cobrar mientras se llena "Valor del pedido" y "Cuánto adelantó"
+function updateAdvanceHint() {
+  const hint = document.getElementById('f-advance-hint');
+  if (!hint) return;
+  if (currentPaymentStatus !== 'partial') { hint.textContent = ''; return; }
+  const total    = parseFloat(document.getElementById('f-value')?.value)   || 0;
+  const adelanto = parseFloat(document.getElementById('f-advance')?.value) || 0;
+  if (!total && !adelanto) { hint.textContent = ''; return; }
+  const restante = Math.max(total - adelanto, 0);
+  hint.textContent = `Saldo pendiente: S/${restante.toFixed(2)}`;
 }
 
 async function markAsPaid(id) {
@@ -919,6 +948,7 @@ async function addShipment() {
     product: '',
     city:    document.getElementById('f-city').value.trim(),
     value:   parseFloat(document.getElementById('f-value').value) || 0,
+    advance: currentPaymentStatus === 'partial' ? (parseFloat(document.getElementById('f-advance').value) || 0) : 0,
     status:  'in-transit', // siempre en tránsito al agregar
     paymentStatus: currentPaymentStatus,
     addedDate:     new Date().toISOString(),
@@ -936,6 +966,7 @@ async function addShipment() {
       product: s.product,
       city:    s.city,
       value:   s.value,
+      advance: s.advance,
       status:  s.status,
       paymentStatus: s.paymentStatus,
       addedDate:     s.addedDate,
@@ -943,7 +974,7 @@ async function addShipment() {
       lastChecked:   null
     });
 
-    ['f-client-nombre','f-client-apellidos','f-order','f-code','f-pin','f-city','f-value']
+    ['f-client-nombre','f-client-apellidos','f-order','f-code','f-pin','f-city','f-value','f-advance']
       .forEach(id => document.getElementById(id).value = '');
     resetPaymentStatus();
 
@@ -1013,6 +1044,7 @@ function showEditModal(id) {
       <div class="form-group"><label>Producto</label><input id="e-product" value="${s.product||''}"></div>
     </div>
     <div class="form-group"><label>Valor pedido (S/)</label><input type="number" id="e-value" value="${s.value||0}" step="0.5"></div>
+    ${s.paymentStatus === 'partial' ? `<div class="form-group"><label>¿Cuánto adelantó el cliente? (S/)</label><input type="number" id="e-advance" value="${s.advance||0}" step="0.5"></div>` : ''}
     <button class="btn btn-primary" onclick="saveEdit('${id}')" style="margin-top:0.5rem">💾 Guardar cambios</button>
   `;
   document.getElementById('modal-edit').classList.add('show');
@@ -1029,18 +1061,22 @@ async function saveEdit(id) {
   s.product = document.getElementById('e-product').value.trim();
   s.city    = document.getElementById('e-city').value.trim();
   s.value   = parseFloat(document.getElementById('e-value').value) || 0;
+  const advEl = document.getElementById('e-advance');
+  if (advEl) s.advance = parseFloat(advEl.value) || 0;
   if (s.pin && !/^\d{4}$/.test(s.pin)) { showToast('⚠️ La Clave de Recojo debe tener 4 dígitos', 'error'); return; }
   try {
-    await col.doc(id).update({
-      client:  document.getElementById('e-client').value.trim(),
-      phone:   document.getElementById('e-phone').value.trim(),
-      order:   document.getElementById('e-order').value.trim(),
-      code:    document.getElementById('e-code').value.trim(),
+    const updates = {
+      client:  s.client,
+      phone:   s.phone,
+      order:   s.order,
+      code:    s.code,
       pin:     s.pin,
-      product: document.getElementById('e-product').value.trim(),
-      city:    document.getElementById('e-city').value.trim(),
-      value:   parseFloat(document.getElementById('e-value').value) || 0,
-    });
+      product: s.product,
+      city:    s.city,
+      value:   s.value,
+    };
+    if (advEl) updates.advance = s.advance;
+    await col.doc(id).update(updates);
     closeModal('modal-edit');
     showToast('✏️ Envío actualizado', 'success');
   } catch(e) {
@@ -1086,6 +1122,11 @@ function showShipmentModal(id) {
         ${s.product ? `<span>🛍️ ${s.product}</span>` : ''}
         ${s.value ? `<span>🛒 Pedido S/${s.value.toFixed(2)}</span>` : ''}
       </div>
+      ${s.paymentStatus === 'partial' ? `
+      <div class="si-meta" style="font-size:0.85rem">
+        <span>✅ Adelantó S/${(parseFloat(s.advance)||0).toFixed(2)}</span>
+        <span>🔸 Saldo pendiente S/${Math.max((parseFloat(s.value)||0)-(parseFloat(s.advance)||0),0).toFixed(2)}</span>
+      </div>` : ''}
       <div class="si-meta" style="font-size:0.8rem">
         <span>📅 Agregado: ${fmtDate(s.addedDate)}</span>
         ${s.deliveredDate ? `<span>✅ Entregado: ${fmtDate(s.deliveredDate)}</span>` : ''}
@@ -1953,13 +1994,19 @@ function buildMsg(template, s) {
   if (s.paymentStatus === 'partial') {
     tpl = tpl.split('\n').filter(line => !line.includes('{clave}')).join('\n');
   }
+  const total    = parseFloat(s.value)   || 0;
+  const adelanto = parseFloat(s.advance) || 0;
+  const restante = Math.max(total - adelanto, 0);
   return tpl
     .replace(/{cliente}/g, (s.client || '').trim().split(/\s+/)[0] || '')
     .replace(/{orden}/g,   s.order  || '')
     .replace(/{codigo}/g,  s.code   || '')
     .replace(/{clave}/g,   s.pin    || '')
     .replace(/{ciudad}/g,  s.city   || '')
-    .replace(/{producto}/g,s.product|| '');
+    .replace(/{producto}/g,s.product|| '')
+    .replace(/{total}/g,    total.toFixed(2))
+    .replace(/{adelanto}/g, adelanto.toFixed(2))
+    .replace(/{restante}/g, restante.toFixed(2));
 }
 
 function updateWAPreview() {
@@ -1970,6 +2017,8 @@ function updateWAPreview() {
     pin:     document.getElementById('f-pin')?.value     || '',
     city:    document.getElementById('f-city')?.value    || '',
     product: '',
+    value:   parseFloat(document.getElementById('f-value')?.value)   || 0,
+    advance: parseFloat(document.getElementById('f-advance')?.value) || 0,
     paymentStatus: currentPaymentStatus
   };
   const hasData = s.client || s.order || s.code;
