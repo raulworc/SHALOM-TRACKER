@@ -1123,8 +1123,6 @@ function showShipmentModal(id) {
 // ═══════════════════════════════════
 //  ALERTAS (seguimiento automático)
 // ═══════════════════════════════════
-const ALERT_PAYMENT_DAYS = 2;  // días con 50% pendiente antes de resaltarlo
-
 function daysSince(dateStr) {
   if (!dateStr) return 0;
   return Math.floor((Date.now() - new Date(dateStr)) / 86400000);
@@ -1135,7 +1133,7 @@ function renderAlerts() {
   if (!el) return;
 
   const pendingPay = shipments
-    .filter(s => s.paymentStatus === 'partial' && (s.status === 'delivered' || daysSince(s.addedDate) >= ALERT_PAYMENT_DAYS))
+    .filter(s => s.paymentStatus === 'partial')
     .sort((a,b) => daysSince(b.addedDate) - daysSince(a.addedDate));
 
   if (!pendingPay.length) {
