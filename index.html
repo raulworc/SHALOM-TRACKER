@@ -218,6 +218,14 @@ textarea { resize:vertical; min-height:100px; }
 }
 .fab:active { transform: scale(0.96); }
 
+.nuevo-layout { display:flex; gap:1.5rem; align-items:flex-start; }
+.nuevo-layout-main { max-width:600px; flex:1; min-width:0; }
+.nuevo-layout-side { width:340px; flex-shrink:0; }
+.client-pick-row { background:var(--navy-light); border:1px solid var(--border); border-radius:10px; padding:0.75rem 0.9rem; margin-bottom:0.6rem; cursor:pointer; transition:all 0.15s; }
+.client-pick-row:hover { border-color:var(--red); transform:translateX(2px); }
+.client-pick-name { font-family:'Syne',sans-serif; font-weight:700; font-size:0.85rem; }
+.client-pick-meta { font-size:0.72rem; color:var(--gray); margin-top:0.2rem; }
+
 @media (max-width:900px) {
   .sidebar { transform:translateX(-100%); }
   .sidebar.open { transform:translateX(0); }
@@ -228,6 +236,9 @@ textarea { resize:vertical; min-height:100px; }
   .hamburger { display:block; }
   .form-row { grid-template-columns:1fr; }
   .fab { display:flex !important; }
+  .nuevo-layout { flex-direction:column; }
+  .nuevo-layout-main { max-width:100%; }
+  .nuevo-layout-side { width:100%; }
 }
 
 /* ── ETIQUETA IMPRIMIBLE (formato horizontal, como la hoja que se pega al pedido) ── */
@@ -382,7 +393,8 @@ textarea { resize:vertical; min-height:100px; }
 
   <!-- ═══ NUEVO ENVÍO ═══ -->
   <div class="page" id="page-nuevo">
-    <div style="max-width:600px">
+    <div class="nuevo-layout">
+    <div class="nuevo-layout-main">
       <div class="card">
         <div class="section-title">📦 Datos del Envío</div>
         <div class="form-row">
@@ -443,6 +455,18 @@ textarea { resize:vertical; min-height:100px; }
         <div class="wa-box" id="wa-preview-delivered">Completa los datos para ver el mensaje...</div>
         <button class="btn btn-green btn-sm" id="btn-copy-wa-delivered" style="margin-top:0.75rem;width:100%" onclick="copyWADelivered()">📋 Copiar mensaje</button>
       </div>
+    </div>
+    <div class="nuevo-layout-side">
+      <div class="card">
+        <div class="section-title">👥 Clientes ya atendidos</div>
+        <p style="font-size:0.75rem;color:var(--gray);margin-bottom:0.75rem">Los ⭐ frecuentes aparecen primero. Toca uno para completar Nombre, Apellidos y Ciudad con sus últimos datos.</p>
+        <div class="search-wrap" style="margin-bottom:0.75rem">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="nuevo-client-search" placeholder="Buscar cliente..." oninput="renderNuevoClientPicker(this.value)">
+        </div>
+        <div id="nuevo-client-picker-list" style="max-height:70vh;overflow-y:auto"></div>
+      </div>
+    </div>
     </div>
   </div>
 
@@ -752,6 +776,7 @@ function startRealtimeSync() {
     if (activePage === 'ciudades')  renderCities();
     if (activePage === 'reportes')  renderReports();
     if (activePage === 'historial') renderHistory();
+    if (activePage === 'nuevo')     renderNuevoClientPicker(document.getElementById('nuevo-client-search')?.value || '');
     hideLoading();
   });
 }
@@ -775,6 +800,7 @@ function startClientAliasSync() {
     if (activePage === 'envios')    renderShipments();
     if (activePage === 'dashboard') renderDashboard();
     if (activePage === 'historial') renderHistory();
+    if (activePage === 'nuevo')     renderNuevoClientPicker(document.getElementById('nuevo-client-search')?.value || '');
   });
 }
 
@@ -867,7 +893,7 @@ function showPage(id) {
   if (id === 'etiquetas')  renderSavedClients();
   if (id === 'reportes')   renderReports();
   if (id === 'historial')  renderHistory();
-  if (id === 'nuevo')      updateWAPreview();
+  if (id === 'nuevo') { updateWAPreview(); renderNuevoClientPicker(document.getElementById('nuevo-client-search')?.value || ''); }
   if (id === 'mensajes')   loadMessages();
 
   if (window.innerWidth <= 900) document.getElementById('sidebar').classList.remove('open');
@@ -1614,6 +1640,62 @@ function mostRecentCityForClient(clientName) {
   const cs = shipments.filter(s => s.client === clientName && s.city)
     .sort((a,b) => new Date(b.addedDate) - new Date(a.addedDate));
   return cs[0]?.city || '';
+}
+
+// ═══════════════════════════════════
+//  NUEVO ENVÍO — panel de clientes ya atendidos
+// ═══════════════════════════════════
+
+// Lista, en el panel derecho de "Nuevo Envío", a los clientes a los que ya se les hizo
+// algún envío — los ⭐ frecuentes (3+ envíos) primero, luego por cantidad de envíos.
+function renderNuevoClientPicker(q = '') {
+  const el = document.getElementById('nuevo-client-picker-list');
+  if (!el) return;
+  const ql = q.trim().toLowerCase();
+
+  const clients = uniqueClients()
+    .map(client => {
+      const cs = shipments.filter(s => s.client === client);
+      const lastDate = cs.reduce((max, s) => Math.max(max, new Date(s.addedDate).getTime() || 0), 0);
+      return { client, count: cs.length, lastDate, frequent: cs.length >= FREQUENT_CLIENT_THRESHOLD };
+    })
+    .filter(c => !ql || clientDisplay(c.client).toLowerCase().includes(ql) || c.client.toLowerCase().includes(ql))
+    .sort((a, b) => (b.frequent - a.frequent) || (b.count - a.count) || (b.lastDate - a.lastDate));
+
+  if (!clients.length) {
+    el.innerHTML = ql
+      ? '<div class="empty" style="padding:1.5rem 0"><div class="empty-icon">🔍</div><p>Ningún cliente coincide</p></div>'
+      : '<div class="empty" style="padding:1.5rem 0"><div class="empty-icon">👥</div><p>Aún no hay envíos registrados</p></div>';
+    return;
+  }
+
+  el.innerHTML = clients.map(c => {
+    const nameEsc = c.client.replace(/'/g, "\\'");
+    return `
+      <div class="client-pick-row" onclick="useClientForNewShipment('${nameEsc}')">
+        <div class="client-pick-name">${c.frequent ? '⭐ ' : '👤 '}${clientDisplay(c.client)}</div>
+        <div class="client-pick-meta">${c.count} envío${c.count !== 1 ? 's' : ''}${c.frequent ? ' · Frecuente' : ''}</div>
+      </div>`;
+  }).join('');
+}
+
+// Separa un nombre completo en "primer nombre" / "resto" para las dos casillas del formulario
+function splitClientName(fullName) {
+  const parts = (fullName || '').trim().split(/\s+/);
+  return { nombre: parts[0] || '', apellidos: parts.slice(1).join(' ') };
+}
+
+// Al tocar un cliente del panel derecho: completa Nombre, Apellidos y Ciudad con sus
+// últimos datos (Orden, Código, Clave y Valor se dejan en blanco, son propios de cada envío)
+function useClientForNewShipment(clientName) {
+  const { nombre, apellidos } = splitClientName(clientName);
+  document.getElementById('f-client-nombre').value    = nombre;
+  document.getElementById('f-client-apellidos').value = apellidos;
+  const city = mostRecentCityForClient(clientName);
+  if (city) document.getElementById('f-city').value = city;
+  updateWAPreview();
+  showToast(`✏️ Datos de "${clientDisplay(clientName)}" cargados — completa Orden, Código y Clave`, 'success');
+  document.getElementById('f-order')?.focus();
 }
 
 // Lista de clientes que se guardaron explícitamente desde "Guardar Cliente", ordenados por
