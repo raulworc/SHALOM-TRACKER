@@ -1679,10 +1679,13 @@ function renderNuevoClientPicker(q = '') {
   }).join('');
 }
 
-// Separa un nombre completo en "primer nombre" / "resto" para las dos casillas del formulario
+// Separa un nombre completo en Nombre / Apellidos para las dos casillas del formulario.
+// Los clientes suelen quedar guardados en orden "Apellido(s) Nombre" (como en el DNI/Shalom),
+// así que la última palabra es el nombre de pila y el resto son los apellidos.
 function splitClientName(fullName) {
-  const parts = (fullName || '').trim().split(/\s+/);
-  return { nombre: parts[0] || '', apellidos: parts.slice(1).join(' ') };
+  const parts = (fullName || '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length <= 1) return { nombre: parts[0] || '', apellidos: '' };
+  return { nombre: parts[parts.length - 1], apellidos: parts.slice(0, -1).join(' ') };
 }
 
 // Al tocar un cliente del panel derecho: completa Nombre, Apellidos y Ciudad con sus
