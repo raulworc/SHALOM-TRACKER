@@ -1050,10 +1050,13 @@ async function deleteShipment(id) {
 // ═══════════════════════════════════
 //  EDIT SHIPMENT
 // ═══════════════════════════════════
+let editModalPaymentStatus = 'paid'; // estado de pago seleccionado dentro del modal "Editar Envío"
+
 function showEditModal(id) {
   const s = shipments.find(x => x.id === id);
   if (!s) return;
   closeModal('modal-shipment');
+  editModalPaymentStatus = s.paymentStatus === 'partial' ? 'partial' : 'paid';
 
   document.getElementById('modal-edit-body').innerHTML = `
     <div class="form-row">
@@ -1072,10 +1075,28 @@ function showEditModal(id) {
       <div class="form-group"><label>Producto</label><input id="e-product" value="${s.product||''}"></div>
     </div>
     <div class="form-group"><label>Valor pedido (S/)</label><input type="number" id="e-value" value="${s.value||0}" step="0.5"></div>
-    ${s.paymentStatus === 'partial' ? `<div class="form-group"><label>¿Cuánto adelantó el cliente? (S/)</label><input type="number" id="e-advance" value="${s.advance||0}" step="0.5"></div>` : ''}
+    <div class="form-group">
+      <label>Estado de Pago</label>
+      <div class="tabs" id="edit-payment-tabs" style="margin-bottom:0">
+        <div class="tab ${s.paymentStatus !== 'partial' ? 'active' : ''}" onclick="setEditPaymentStatus('paid', this)">✅ Pagado</div>
+        <div class="tab ${s.paymentStatus === 'partial' ? 'active' : ''}" onclick="setEditPaymentStatus('partial', this)">🔸 50% Adelanto</div>
+      </div>
+    </div>
+    <div class="form-group" id="e-advance-group" style="display:${s.paymentStatus === 'partial' ? 'block' : 'none'}">
+      <label>¿Cuánto adelantó el cliente? (S/)</label>
+      <input type="number" id="e-advance" value="${s.advance||0}" step="0.5">
+    </div>
     <button class="btn btn-primary" onclick="saveEdit('${id}')" style="margin-top:0.5rem">💾 Guardar cambios</button>
   `;
   document.getElementById('modal-edit').classList.add('show');
+}
+
+function setEditPaymentStatus(status, el) {
+  editModalPaymentStatus = status;
+  document.querySelectorAll('#edit-payment-tabs .tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const advGroup = document.getElementById('e-advance-group');
+  if (advGroup) advGroup.style.display = status === 'partial' ? 'block' : 'none';
 }
 
 async function saveEdit(id) {
@@ -1089,8 +1110,9 @@ async function saveEdit(id) {
   s.product = document.getElementById('e-product').value.trim();
   s.city    = document.getElementById('e-city').value.trim();
   s.value   = parseFloat(document.getElementById('e-value').value) || 0;
+  s.paymentStatus = editModalPaymentStatus;
   const advEl = document.getElementById('e-advance');
-  if (advEl) s.advance = parseFloat(advEl.value) || 0;
+  s.advance = (s.paymentStatus === 'partial') ? (parseFloat(advEl?.value) || 0) : 0;
   if (s.pin && !/^\d{4}$/.test(s.pin)) { showToast('⚠️ La Clave de Recojo debe tener 4 dígitos', 'error'); return; }
   try {
     const updates = {
@@ -1102,8 +1124,9 @@ async function saveEdit(id) {
       product: s.product,
       city:    s.city,
       value:   s.value,
+      paymentStatus: s.paymentStatus,
+      advance: s.advance,
     };
-    if (advEl) updates.advance = s.advance;
     await col.doc(id).update(updates);
     closeModal('modal-edit');
     showToast('✏️ Envío actualizado', 'success');
