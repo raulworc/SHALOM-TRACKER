@@ -507,7 +507,7 @@ textarea { resize:vertical; min-height:100px; }
         <input type="text" id="lbl-nombre" placeholder="Ej: Marcelo Casimiro Ortega">
       </div>
       <div class="form-row">
-        <div class="form-group"><label>DNI *</label><input type="text" id="lbl-dni" placeholder="Ej: 22463931" inputmode="numeric" maxlength="8"></div>
+        <div class="form-group"><label>DNI / RUC *</label><input type="text" id="lbl-dni" placeholder="Ej: 22463931 o 20123456789" inputmode="numeric" maxlength="11" oninput="this.value=this.value.replace(/\D/g,'').slice(0,11)"></div>
         <div class="form-group"><label>Ciudad - Región *</label><input type="text" id="lbl-region" placeholder="Ej: Amarilis - Huánuco"></div>
       </div>
       <div class="form-group">
@@ -527,7 +527,7 @@ textarea { resize:vertical; min-height:100px; }
         <button class="btn btn-green" id="btn-save-client" onclick="saveClientFromForm()" style="flex:1">💾 Guardar Cliente</button>
         <button class="btn btn-primary" onclick="generateLabelFromForm()" style="flex:2">🖨️ Generar e Imprimir</button>
       </div>
-      <p style="font-size:0.75rem;color:var(--gray);margin-top:0.6rem">"Guardar Cliente" no es automático — revisa el nombre y el DNI antes de guardar para evitar errores. Una vez guardado, el cliente aparece abajo para reimprimir su etiqueta con un solo click, o para editarlo/borrarlo si hubo un error.</p>
+      <p style="font-size:0.75rem;color:var(--gray);margin-top:0.6rem">"Guardar Cliente" no es automático — revisa el nombre y el DNI/RUC antes de guardar para evitar errores. Una vez guardado, el cliente aparece abajo para reimprimir su etiqueta con un solo click, o para editarlo/borrarlo si hubo un error.</p>
     </div>
     <div class="card" style="margin-top:1rem">
       <div class="section-title">📇 Clientes Guardados</div>
@@ -1556,15 +1556,23 @@ function fitPrintLabel() {
   area.classList.remove('label-fitting');
 }
 
+// DNI (8 dígitos) o RUC (11 dígitos) — según el largo del número se decide cómo rotular la etiqueta
+function dniOrRucLabel(value) {
+  const digits = (value || '').replace(/\D/g, '');
+  if (digits.length === 11) return 'RUC';
+  if (digits.length === 8)  return 'DNI';
+  return 'DNI/RUC';
+}
+
 // Pinta el contenido oculto de impresión y dispara el diálogo de impresión del navegador
 function printLabel(nombre, dni, region) {
   if (!nombre || !dni || !region) {
-    showToast('⚠️ Completa nombre, DNI y ciudad-región', 'error');
+    showToast('⚠️ Completa nombre, DNI/RUC y ciudad-región', 'error');
     return;
   }
   document.getElementById('print-label-box').className = 'print-label-box size-' + selectedLabelSize;
   document.getElementById('print-label-name').textContent   = nombre.toUpperCase();
-  document.getElementById('print-label-dni').textContent    = 'DNI: ' + dni;
+  document.getElementById('print-label-dni').textContent    = dniOrRucLabel(dni) + ': ' + dni;
   document.getElementById('print-label-region').textContent = region.toUpperCase();
   fitPrintLabel();
   setTimeout(() => window.print(), 50);
@@ -1588,7 +1596,7 @@ async function saveClientFromForm() {
   const dni    = document.getElementById('lbl-dni').value.trim();
   const region = document.getElementById('lbl-region').value.trim();
   if (!nombre || !dni || !region) {
-    showToast('⚠️ Completa nombre, DNI y ciudad-región antes de guardar', 'error');
+    showToast('⚠️ Completa nombre, DNI/RUC y ciudad-región antes de guardar', 'error');
     return;
   }
   const newKey = normalizeText(nombre);
